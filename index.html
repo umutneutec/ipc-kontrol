@@ -562,6 +562,9 @@
       <div class="satir"><span>Seçilen Ürün</span><b>${urun.sapUrunAdi}</b></div>
       <div class="satir"><span>Ülke</span><b>${urun.ulke}</b></div>
       <div class="satir"><span>Ruhsat Sahibi</span><b>${urun.ruhsatSahibi}</b></div>
+      <div class="satir"><span>Miat</span><b>${urun.miat ? urun.miat + ' ay' : 'Sheet\'te tanımlı değil'}</b></div>
+      <div class="satir"><span>AB Test Numunesi</span><b>${urun.abTest ? 'Alınacak' : 'Alınmayacak'}</b></div>
+      <div class="satir"><span>Referans Numunesi</span><b>${urun.referansNumune ? 'Alınacak' : 'Alınmayacak'}</b></div>
     `;
     document.getElementById('urun-secim-hata').style.display = 'none';
     document.getElementById('urun-arama-sonuclari').innerHTML = '';
@@ -640,7 +643,11 @@
         `;
       } else {
         alan.className = 'hata';
-        alan.textContent = sonuc.mesaj || 'Referans görseller bulunamadı — Drive klasörünü kontrol et.';
+        let mesaj = sonuc.mesaj || 'Referans görseller bulunamadı — Drive klasörünü kontrol et.';
+        if (sonuc.mevcutKlasorAdlari && sonuc.mevcutKlasorAdlari.length) {
+          mesaj += ' — "urunler" klasöründeki mevcut adlardan bazıları: ' + sonuc.mevcutKlasorAdlari.join(', ');
+        }
+        alan.textContent = mesaj;
       }
     } catch (err) {
       alan.className = 'hata';
@@ -690,19 +697,26 @@
     return { partiNo, uretimTarihi, urunKoduHam };
   }
 
+  // 'gecersizTarih' | 'gecersizMiat' | "AA/YYYY" metni döner.
   function sktHesapla(uretimTarihi, miatAy) {
-    if (!(uretimTarihi instanceof Date) || isNaN(uretimTarihi.getTime()) || !miatAy) return null;
+    if (!(uretimTarihi instanceof Date) || isNaN(uretimTarihi.getTime())) return 'gecersizTarih';
+    const ay = Number(miatAy);
+    if (!miatAy || isNaN(ay)) return 'gecersizMiat';
     const d = new Date(uretimTarihi.getTime());
-    d.setMonth(d.getMonth() + Number(miatAy));
-    const ay = String(d.getMonth() + 1).padStart(2, '0');
-    return `${ay}/${d.getFullYear()}`;
+    d.setMonth(d.getMonth() + ay);
+    const ayStr = String(d.getMonth() + 1).padStart(2, '0');
+    return `${ayStr}/${d.getFullYear()}`;
   }
 
   function lidVeriIsle(veri) {
     const hataKutusu = document.getElementById('karekod-hata');
     const sktMetni = sktHesapla(veri.uretimTarihi, sihirbaz.urun.miat);
-    if (!sktMetni) {
+    if (sktMetni === 'gecersizTarih') {
       hataKutusu.textContent = 'Tarih geçersiz görünüyor, tekrar dene.';
+      return;
+    }
+    if (sktMetni === 'gecersizMiat') {
+      hataKutusu.textContent = `"${sihirbaz.urun.sapUrunAdi}" ürünü için Sheet'teki Miat (ay) bilgisi eksik/hatalı görünüyor — urun_bilgileri sekmesinde bu ürünün Miat hücresini kontrol et.`;
       return;
     }
     hataKutusu.textContent = '';
@@ -738,6 +752,7 @@
   function karekodHints() {
     const hints = new Map();
     hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.DATA_MATRIX]);
+    hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
     return hints;
   }
 
