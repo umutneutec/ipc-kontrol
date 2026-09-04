@@ -325,6 +325,12 @@
     { id: 't5', metin: 'STN-31 Kamera Sistemi — karartılmış lid\'li cihaz reddedildi' }
   ];
 
+  function ikonEvetHayir(deger) {
+    return deger
+      ? '<span style="color:#2E8B57;font-weight:800;">&#10003;</span>'
+      : '<span style="color:var(--gri);font-weight:800;">&#10005;</span>';
+  }
+
   function ekranGoster(id) {
     document.querySelectorAll('.ekran').forEach(e => e.classList.remove('aktif'));
     document.getElementById(id).classList.add('aktif');
@@ -563,8 +569,8 @@
       <div class="satir"><span>Ülke</span><b>${urun.ulke}</b></div>
       <div class="satir"><span>Ruhsat Sahibi</span><b>${urun.ruhsatSahibi}</b></div>
       <div class="satir"><span>Miat</span><b>${urun.miat ? urun.miat + ' ay' : 'Sheet\'te tanımlı değil'}</b></div>
-      <div class="satir"><span>AB Test Numunesi</span><b>${urun.abTest ? 'Alınacak' : 'Alınmayacak'}</b></div>
-      <div class="satir"><span>Referans Numunesi</span><b>${urun.referansNumune ? 'Alınacak' : 'Alınmayacak'}</b></div>
+      <div class="satir"><span>AB Test Numunesi</span><b>${ikonEvetHayir(urun.abTest)}</b></div>
+      <div class="satir"><span>Referans Numunesi</span><b>${ikonEvetHayir(urun.referansNumune)}</b></div>
     `;
     document.getElementById('urun-secim-hata').style.display = 'none';
     document.getElementById('urun-arama-sonuclari').innerHTML = '';
