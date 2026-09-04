@@ -64,6 +64,7 @@
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
+    box-shadow: 0 2px 6px rgba(228,52,42,0.25);
   }
   button:disabled { opacity: 0.4; cursor: not-allowed; }
   button.ikincil {
@@ -85,6 +86,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   }
   .secenek:active { background: #F0F0F0; }
   .secenek.pasif { opacity: 0.4; cursor: not-allowed; }
@@ -96,6 +98,7 @@
     padding: 18px;
     margin-top: 16px;
     border: 1px solid #E4E4E6;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   }
   .kart .satir { display: flex; justify-content: space-between; font-size: 14px; padding: 6px 0; border-bottom: 1px solid #F0F0F0; }
   .kart .satir:last-child { border-bottom: none; }
@@ -126,6 +129,77 @@
   .gorsel-kutu img { width: 100%; border-radius: 10px; border: 1px solid #E4E4E6; background: var(--beyaz); }
   .gorsel-kutu span { display: block; font-size: 11px; color: var(--gri); margin-top: 4px; }
   .arama-sonuc-listesi { max-height: 320px; overflow-y: auto; }
+
+  .urun-ozet-kart {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--beyaz);
+    border: 1px solid #E4E4E6;
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .avatar-kare {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 800;
+    font-size: 18px;
+  }
+  .urun-ozet-metin b { display: block; font-size: 15px; margin-bottom: 2px; }
+  .urun-ozet-metin span { font-size: 13px; color: var(--gri); }
+
+  .ek-numune-kart {
+    background: #FAFAFA;
+    border: 1px solid #E4E4E6;
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  .ek-numune-basligi { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: var(--gri); margin-bottom: 8px; text-transform: uppercase; }
+  .ek-numune-satiri { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-top: 1px solid #ECECEE; }
+  .ek-numune-satiri:first-of-type { border-top: none; }
+  .ek-numune-satiri b { display: block; font-size: 14px; }
+  .ek-numune-satiri span { font-size: 12px; color: var(--gri); }
+  .rozet-sayi { background: #E8F0FE; color: #1A56DB; font-weight: 700; font-size: 13px; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
+
+  .numune-kategori-kart {
+    background: var(--beyaz);
+    border: 1px solid #E4E4E6;
+    border-radius: 14px;
+    padding: 4px 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .numune-kategori-baslik { display: flex; justify-content: space-between; align-items: center; padding: 14px 0 10px; font-size: 14px; font-weight: 700; }
+  .numune-kategori-baslik .toplam-etiket { font-size: 13px; color: var(--gri); font-weight: 600; }
+  .numune-satiri { padding: 10px 0; border-top: 1px solid #F0F0F0; }
+  .numune-satiri:first-of-type { border-top: none; }
+  .numune-satiri-ust { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; font-size: 13px; color: var(--gri); }
+  .numune-satiri-ust b { color: var(--gri-koyu); font-size: 15px; margin-left: 4px; }
+  .ilerleme-yolu { background: #EFEFF1; border-radius: 20px; height: 7px; overflow: hidden; }
+  .ilerleme-dolu { height: 100%; border-radius: 20px; }
+
+  .toplam-numune-kart {
+    background: var(--gri-koyu);
+    color: white;
+    border-radius: 14px;
+    padding: 16px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .toplam-numune-kart .sol span { display: block; font-size: 12px; opacity: 0.65; margin-bottom: 2px; }
+  .toplam-numune-kart .sol b { font-size: 20px; }
+  .toplam-numune-kart .sag { font-size: 12px; opacity: 0.75; text-align: right; }
 </style>
 </head>
 <body>
@@ -862,29 +936,90 @@
   document.getElementById('btn-lid-devam').addEventListener('click', numuneGoster);
 
   // -- Adım 6: Numune Alma --
+  const AVATAR_PALETI = ['#E4342A', '#3B82F6', '#8B5CF6', '#F97316', '#0EA5A4', '#DB2777'];
+
+  function avatarRengi(metin) {
+    let toplam = 0;
+    for (let i = 0; i < metin.length; i++) toplam += metin.charCodeAt(i);
+    return AVATAR_PALETI[toplam % AVATAR_PALETI.length];
+  }
+
   function numuneHesapla(urun) {
     const numuneler = [
-      { ad: 'KKL Numunesi', dagilim: { 1: 6, 5: 5, 8: 6, 12: 5 }, aktif: true },
-      { ad: 'RAF Numunesi', dagilim: { 1: 12, 5: 12, 8: 12, 12: 12 }, aktif: true },
-      { ad: 'Referans Numunesi', dagilim: { 1: 12, 5: 12, 8: 12, 12: 12 }, aktif: urun.referansNumune },
-      { ad: 'AB Test Numunesi', dagilim: { 1: 9, 5: 9, 8: 9, 12: 9 }, aktif: urun.abTest }
+      { ad: 'KKL Numunesi', renk: '#3B82F6', sabit: true, dagilim: { 1: 6, 5: 5, 8: 6, 12: 5 }, aktif: true },
+      { ad: 'RAF Numunesi', renk: '#10B981', sabit: true, dagilim: { 1: 12, 5: 12, 8: 12, 12: 12 }, aktif: true },
+      { ad: 'Referans Numunesi', renk: '#F97316', sabit: false, dagilim: { 1: 12, 5: 12, 8: 12, 12: 12 }, aktif: urun.referansNumune },
+      { ad: 'AB Test Numunesi', renk: '#8B5CF6', sabit: false, dagilim: { 1: 9, 5: 9, 8: 9, 12: 9 }, aktif: urun.abTest }
     ];
     return numuneler.filter(n => n.aktif);
   }
 
   function numuneGoster() {
     const icerik = document.getElementById('numune-icerik');
-    const numuneler = numuneHesapla(sihirbaz.urun);
-    icerik.innerHTML = numuneler.map(n => {
-      const toplam = Object.values(n.dagilim).reduce((a, b) => a + b, 0);
-      const spoolSatirlari = Object.entries(n.dagilim)
-        .map(([spool, adet]) => `<div class="satir"><span>Spool ${spool}</span><b>${adet} adet</b></div>`)
-        .join('');
-      return `
-        <div class="numune-basligi">${n.ad} — Toplam ${toplam} adet</div>
-        <div class="kart">${spoolSatirlari}</div>
+    const u = sihirbaz.urun;
+    const numuneler = numuneHesapla(u);
+    const ekNumuneler = numuneler.filter(n => !n.sabit);
+    const harfler = u.sapUrunAdi.replace(/[^A-Za-zÇĞİÖŞÜçğıöşü]/g, '').slice(0, 2).toUpperCase() || '??';
+
+    let html = `
+      <div class="urun-ozet-kart">
+        <div class="avatar-kare" style="background:${avatarRengi(u.sapUrunAdi)}">${harfler}</div>
+        <div class="urun-ozet-metin">
+          <b>${u.sapUrunAdi}</b>
+          <span>${u.ulke} · Miat: ${u.miat ? u.miat + ' ay' : '-'}</span>
+        </div>
+      </div>
+    `;
+
+    if (ekNumuneler.length) {
+      html += `
+        <div class="ek-numune-kart">
+          <div class="ek-numune-basligi">Bu Ürün İçin Ek Numuneler</div>
+          ${ekNumuneler.map(n => {
+            const toplam = Object.values(n.dagilim).reduce((a, b) => a + b, 0);
+            const spoolSayisi = Object.keys(n.dagilim).length;
+            const birimAdet = Object.values(n.dagilim)[0];
+            return `
+              <div class="ek-numune-satiri">
+                <div>
+                  <b>${n.ad}</b>
+                  <span>${spoolSayisi} Spool × ${birimAdet} adet</span>
+                </div>
+                <div class="rozet-sayi">+${toplam}</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
       `;
-    }).join('');
+    }
+
+    numuneler.forEach(n => {
+      const toplam = Object.values(n.dagilim).reduce((a, b) => a + b, 0);
+      const maxAdet = Math.max(...Object.values(n.dagilim));
+      const satirlar = Object.entries(n.dagilim).map(([spool, adet]) => `
+        <div class="numune-satiri">
+          <div class="numune-satiri-ust"><span>${spool}. Spool</span><b>${adet} adet</b></div>
+          <div class="ilerleme-yolu"><div class="ilerleme-dolu" style="width:${(adet / maxAdet) * 100}%; background:${n.renk}"></div></div>
+        </div>
+      `).join('');
+      html += `
+        <div class="numune-kategori-kart">
+          <div class="numune-kategori-baslik"><span>${n.ad}</span><span class="toplam-etiket">${toplam} adet</span></div>
+          ${satirlar}
+        </div>
+      `;
+    });
+
+    const genelToplam = numuneler.reduce((t, n) => t + Object.values(n.dagilim).reduce((a, b) => a + b, 0), 0);
+    const sabitToplam = numuneler.filter(n => n.sabit).reduce((t, n) => t + Object.values(n.dagilim).reduce((a, b) => a + b, 0), 0);
+    html += `
+      <div class="toplam-numune-kart">
+        <div class="sol"><span>Toplam Alınacak Numune</span><b>${genelToplam} adet</b></div>
+        <div class="sag">KKL+RAF<br>${sabitToplam} sabit</div>
+      </div>
+    `;
+
+    icerik.innerHTML = html;
     ekranGoster('ekran-sb-numune');
   }
 
