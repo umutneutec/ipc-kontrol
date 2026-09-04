@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>IPC Kontrol</title>
+<style>
+  :root {
+    --kirmizi: #E4342A;
+    --gri: #6E6F72;
+    --gri-koyu: #2B2B2D;
+    --arkaplan: #F4F4F5;
+    --beyaz: #FFFFFF;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--arkaplan);
+    color: var(--gri-koyu);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    background: var(--gri-koyu);
+    color: white;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  header .logo-neu { color: var(--kirmizi); font-weight: 800; }
+  header .logo-tec { color: #B9BABC; font-weight: 800; }
+  header h1 { font-size: 16px; margin: 0; font-weight: 500; opacity: 0.85; }
+  main {
+    flex: 1;
+    padding: 20px;
+    max-width: 480px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .ekran { display: none; }
+  .ekran.aktif { display: block; }
+  h2 { font-size: 18px; margin: 0 0 4px; }
+  .adim-etiketi { font-size: 12px; color: var(--gri); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.03em; }
+  label { display: block; font-size: 13px; color: var(--gri); margin: 14px 0 4px; }
+  input[type=text], input[type=password], select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #D8D8DA;
+    border-radius: 10px;
+    font-size: 16px;
+    background: var(--beyaz);
+  }
+  button {
+    width: 100%;
+    padding: 14px;
+    margin-top: 20px;
+    border: none;
+    border-radius: 10px;
+    background: var(--kirmizi);
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.ikincil {
+    background: var(--beyaz);
+    color: var(--gri-koyu);
+    border: 1px solid #D8D8DA;
+  }
+  button.kucuk { margin-top: 10px; padding: 10px; font-size: 14px; }
+  .secenek-listesi { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+  .secenek {
+    background: var(--beyaz);
+    border: 1px solid #D8D8DA;
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .secenek:active { background: #F0F0F0; }
+  .secenek.pasif { opacity: 0.4; cursor: not-allowed; }
+  .secenek .etiket-yakinda { font-size: 11px; font-weight: 500; color: var(--gri); background: #ECECEE; padding: 3px 8px; border-radius: 20px; }
+  .hata { color: var(--kirmizi); font-size: 13px; margin-top: 10px; min-height: 16px; }
+  .kart {
+    background: var(--beyaz);
+    border-radius: 12px;
+    padding: 18px;
+    margin-top: 16px;
+    border: 1px solid #E4E4E6;
+  }
+  .kart .satir { display: flex; justify-content: space-between; font-size: 14px; padding: 6px 0; border-bottom: 1px solid #F0F0F0; }
+  .kart .satir:last-child { border-bottom: none; }
+  .kart .satir b { color: var(--gri-koyu); text-align: right; }
+  .yukleniyor { text-align: center; color: var(--gri); padding: 30px 0; }
+  .rozet { display: inline-block; background: var(--kirmizi); color: white; font-size: 11px; padding: 3px 8px; border-radius: 20px; margin-bottom: 10px; }
+  .aciklama { font-size: 13px; color: var(--gri); line-height: 1.5; margin: 0 0 12px; }
+  .onay-kutusu {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: var(--beyaz);
+    border: 1px solid #D8D8DA;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-top: 10px;
+    font-size: 14px;
+  }
+  .onay-kutusu input { margin-top: 3px; width: 18px; height: 18px; flex-shrink: 0; }
+  .numune-basligi { font-size: 13px; font-weight: 700; color: var(--gri-koyu); margin: 16px 0 4px; }
+  .uyari-kutusu { background: #FFF4E5; border: 1px solid #F0D9A8; border-radius: 10px; padding: 12px 14px; font-size: 13px; color: #7A5B12; margin-bottom: 10px; }
+  .uyari-kutusu.kritik { background: #FCE8E6; border-color: #F3B4AC; color: var(--kirmizi); font-weight: 600; }
+  .sekme-satiri { display: flex; gap: 8px; margin-top: 8px; }
+  .sekme { flex: 1; text-align: center; margin: 0; }
+  .sekme.secili { background: var(--gri-koyu); color: #fff; border-color: var(--gri-koyu); }
+</style>
+</head>
+<body>
+
+<header>
+  <span><span class="logo-neu">neu</span><span class="logo-tec">tec</span></span>
+  <h1>IPC Kontrol</h1>
+</header>
+
+<main>
+
+  <!-- 1) GİRİŞ EKRANI -->
+  <section id="ekran-giris" class="ekran aktif">
+    <h2>Giriş Yap</h2>
+    <label for="giris-ad">Ad Soyad</label>
+    <input type="text" id="giris-ad" autocomplete="off" />
+    <label for="giris-pin">PIN</label>
+    <input type="password" id="giris-pin" inputmode="numeric" />
+    <button id="btn-giris-yap">Giriş Yap</button>
+    <div class="hata" id="giris-hata"></div>
+  </section>
+
+  <!-- 2) SAHA/MAKİNE SEÇİMİ -->
+  <section id="ekran-hat-secimi" class="ekran">
+    <h2>Saha / Makine Seç</h2>
+    <div class="secenek-listesi" id="hat-listesi">
+      <div class="yukleniyor">Hatlar yükleniyor…</div>
+    </div>
+    <button class="ikincil" id="btn-cikis">Çıkış Yap</button>
+  </section>
+
+  <!-- 3) ŞARJ DURUMU SONUCU -->
+  <section id="ekran-sarj-durumu" class="ekran">
+    <h2 id="sarj-durumu-baslik">Şarj Durumu</h2>
+    <div id="sarj-durumu-icerik" class="yukleniyor">Kontrol ediliyor…</div>
+    <button class="ikincil" id="btn-geri-hatlara">Geri Dön</button>
+  </section>
+
+  <!-- 4) ŞARJ BAŞLATMA SİHİRBAZI — Adım 1: İTD Onayı -->
+  <section id="ekran-sb-itd" class="ekran">
+    <div class="adim-etiketi">Şarj Başlatma — Adım 1 / 7</div>
+    <h2>İTD Onayı</h2>
+    <p class="aciklama">KKL tarafından İTD (uygunluk) onayı verildi mi? Onay yoksa şarj başlatılamaz.</p>
+    <div class="secenek-listesi">
+      <div class="secenek" id="itd-evet">Evet, İTD onayı var</div>
+      <div class="secenek" id="itd-hayir">Hayır</div>
+    </div>
+    <div class="hata" id="itd-hata"></div>
+  </section>
+
+  <!-- 5) Adım 2: Spool/Sipariş Eşleşme -->
+  <section id="ekran-sb-spool" class="ekran">
+    <div class="adim-etiketi">Şarj Başlatma — Adım 2 / 7</div>
+    <h2>Spool Etiket / Sipariş Eşleşme</h2>
+    <p class="aciklama">Spool etiket bilgisi, ambalaj proses siparişiyle eşleşiyor mu? (Görsel olarak kontrol et.)</p>
+    <div class="onay-kutusu">
+      <input type="checkbox" id="spool-onay" />
+      <label for="spool-onay" style="margin:0;">Kontrol ettim, eşleşiyor.</label>
+    </div>
+    <button id="btn-spool-devam">Devam Et</button>
+    <div class="hata" id="spool-hata"></div>
+  </section>
+
+  <!-- 6) Adım 3: Ürün Seçimi + Parti No -->
+  <section id="ekran-sb-urun" class="ekran">
+    <div class="adim-etiketi">Şarj Başlatma — Adım 3 / 7</div>
+    <h2>Ürün Bilgisi Doğrulama</h2>
+    <p class="aciklama">Sortimat panelinde operatörün girdiği ürün bilgisini seç ve parti no'yu doğrula.</p>
+    <label for="urun-secimi">Ürün</label>
+    <select id="urun-secimi"><option value="">Yükleniyor…</option></select>
+    <label for="parti-no-girisi">Parti No</label>
+    <input type="text" id="parti-no-girisi" autocomplete="off" />
+    <button id="btn-urun-devam">Devam Et</button>
+    <div class="hata" id="urun-hata"></div>
+  </section>
+
+  <!-- 7) Adım 4: Makine Challenge Testleri -->
+  <section id="ekran-sb-testler" class="ekran">
+    <div class="adim-etiketi">Şarj Başlatma — Adım 4 / 7</div>
+    <h2>Makine Challenge Testleri</h2>
+    <p class="aciklama">Her test cihazının makine tarafından doğru şekilde reddedildiğini onayla.</p>
+    <div id="test-listesi"></div>
+    <button id="btn-testler-devam">Devam Et</button>
+    <div class="hata" id="testler-hata"></div>
+  </section>
+
+  <!-- 8) Adım 5: İlk Ürün Lid Kontrolü -->
+  <section id="ekran-sb-lid" class="ekran">
+    <div class="adim-etiketi">Şarj Başlatma — Adım 5 / 7</div>
+    <h2>İlk Ürün Lid Kontrolü</h2>
+    <p class="aciklama">İlk üretilen cihazın lid'indeki karekodu tara ya da bilgileri manuel gir — parti no otomatik olarak Adım 3'teki girişle karşılaştırılacak, SKT otomatik hesaplanacak.</p>
+
+    <div class="sekme-satiri">
+      <div class="secenek sekme secili" id="lid-sekme-tarama">Karekod Tara</div>
+      <div class="secenek sekme" id="lid-sekme-manuel">Manuel Gir</div>
+    </div>
+
+    <div id="lid-panel-tarama">
+      <button class="ikincil kucuk" id="btn-tarama-baslat">Kamerayı Aç</button>
+      <div id="karekod-video-alani" style="display:none; margin-top:10px;">
+        <video id="karekod-video" style="width:100%; border-radius:10px; background:#000;"></video>
+        <button class="ikincil kucuk" id="btn-tarama-durdur">Taramayı Durdur</button>
+      </div>
+      <div class="hata" id="karekod-hata"></div>
+    </div>
+
+    <div id="lid-panel-manuel" style="display:none;">
+      <label for="manuel-parti-no">Parti No</label>
+      <input type="text" id="manuel-parti-no" autocomplete="off" />
+      <label for="manuel-uretim-tarihi">Üretim Tarihi</label>
+      <input type="date" id="manuel-uretim-tarihi" />
+      <button class="ikincil kucuk" id="btn-manuel-uygula">Uygula</button>
+      <div class="hata" id="manuel-hata"></div>
+    </div>
+
+    <div id="karekod-sonuc"></div>
+    <div class="uyari-kutusu kritik" id="parti-uyumsuzluk" style="display:none;"></div>
+
+    <button id="btn-lid-devam" disabled>Devam Et</button>
+  </section>
+
+  <!-- 9) Adım 6: Numune Alma -->
+  <section id="ekran-sb-numune" class="ekran">
+    <div class="adim-etiketi">Şarj Başlatma — Adım 6 / 7</div>
+    <h2>Numune Alma</h2>
+    <p class="aciklama">Aşağıdaki numuneleri belirtilen spoollardan al.</p>
+    <div id="numune-icerik"></div>
+    <button id="btn-numune-devam">Devam Et</button>
+  </section>
+
+  <!-- 10) Adım 7: Özet / Onay -->
+  <section id="ekran-sb-ozet" class="ekran">
+    <div class="adim-etiketi">Şarj Başlatma — Adım 7 / 7</div>
+    <h2>Özet ve Onay</h2>
+    <div class="kart" id="ozet-kart"></div>
+    <button id="btn-sarj-onayla">Şarjı Başlat</button>
+    <div class="hata" id="ozet-hata"></div>
+  </section>
+
+</main>
+
+<!-- Karekod (Data Matrix) okuma kütüphanesi -->
+<script src="https://unpkg.com/@zxing/library@0.23.0"></script>
+
+<script>
+  // ============================================================
+  // AYAR: Apps Script'i "Web Uygulaması" olarak dağıttıktan sonra
+  // çıkan URL'yi aşağıya yapıştır.
+  // ============================================================
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx-G3EEYRTudmpWako1i5nYYIAQbms6TQGEWy3qE74OAgrWLSt4v7qKUg1e8kbERFIH/exec';
+
+  let mevcutKullanici = null; // { ad, rol }
+  let seciliHat = null;       // "Üretim-2 / Sortimat" gibi metin
+  let urunListesi = [];       // urunleriGetir() sonucu, ürün seçiminde kullanılır
+
+  // Şarj Başlatma Sihirbazı'nın o anki adımlardaki verisi
+  let sihirbaz = {
+    urun: null,          // seçilen ürün objesi
+    partiNo: null,       // Adım 3'te girilen parti no
+    uretimTarihi: null,  // Adım 5'te karekod/manuel'den gelen üretim tarihi (Date)
+    skt: null            // Adım 5'te hesaplanan SKT ("AA/YYYY")
+  };
+
+  const CHALLENGE_TESTLERI = [
+    { id: 't1', metin: 'STN-3 Kamera Sistemi — SL-01 (güvenlik kilidi olmayan parça) reddedildi' },
+    { id: 't2', metin: 'STN-3 Kamera Sistemi — BD-01/02/03/04 (deforme blister test cihazları) reddedildi' },
+    { id: 't3', metin: 'STN-13 Tork Sensörü — stripsiz cihaz reddedildi' },
+    { id: 't4', metin: 'STN-13 Tork Sensörü — zor açılan kapaklı cihaz reddedildi' },
+    { id: 't5', metin: 'STN-31 Kamera Sistemi — karartılmış lid\'li cihaz reddedildi' }
+  ];
+
+  function ekranGoster(id) {
+    document.querySelectorAll('.ekran').forEach(e => e.classList.remove('aktif'));
+    document.getElementById(id).classList.add('aktif');
+  }
+
+  async function apiGet(islem, parametreler) {
+    const params = new URLSearchParams({ islem, ...parametreler });
+    const yanit = await fetch(`${APPS_SCRIPT_URL}?${params.toString()}`);
+    return yanit.json();
+  }
+
+  async function apiPost(gövde) {
+    const yanit = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      // Apps Script'in yönlendirmesiyle uyumlu çalışması için text/plain kullanılıyor
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(gövde)
+    });
+    return yanit.json();
+  }
+
+  // ---- 1) Giriş ----
+  document.getElementById('btn-giris-yap').addEventListener('click', async () => {
+    const ad = document.getElementById('giris-ad').value.trim();
+    const pin = document.getElementById('giris-pin').value.trim();
+    const hataKutusu = document.getElementById('giris-hata');
+    hataKutusu.textContent = '';
+
+    if (!ad || !pin) {
+      hataKutusu.textContent = 'Ad ve PIN gerekli.';
+      return;
+    }
+
+    try {
+      const sonuc = await apiPost({ islem: 'girisYap', ad, pin });
+      if (sonuc.basarili) {
+        mevcutKullanici = { ad: sonuc.ad, rol: sonuc.rol };
+        hatlariYukleVeGoster();
+      } else {
+        hataKutusu.textContent = sonuc.mesaj || 'Giriş başarısız.';
+      }
+    } catch (err) {
+      hataKutusu.textContent = 'Bağlantı hatası: ' + err.message;
+    }
+  });
+
+  // ---- 2) Saha/Makine listesi ----
+  async function hatlariYukleVeGoster() {
+    ekranGoster('ekran-hat-secimi');
+    const liste = document.getElementById('hat-listesi');
+    liste.innerHTML = '<div class="yukleniyor">Hatlar yükleniyor…</div>';
+
+    try {
+      const sonuc = await apiGet('hatlariGetir', {});
+      if (!sonuc.basarili || sonuc.veri.length === 0) {
+        liste.innerHTML = '<div class="hata">Tanımlı hat bulunamadı.</div>';
+        return;
+      }
+      liste.innerHTML = '';
+      sonuc.veri.forEach(hat => {
+        const buton = document.createElement('div');
+        buton.className = 'secenek' + (hat.aktif ? '' : ' pasif');
+        buton.innerHTML = `<span>${hat.saha} — ${hat.makine}</span>` + (hat.aktif ? '' : '<span class="etiket-yakinda">Yakında</span>');
+        if (hat.aktif) {
+          buton.addEventListener('click', () => hatSeç(`${hat.saha} / ${hat.makine}`));
+        }
+        liste.appendChild(buton);
+      });
+    } catch (err) {
+      liste.innerHTML = `<div class="hata">Bağlantı hatası: ${err.message}</div>`;
+    }
+  }
+
+  // ---- 3) Hat seçilince açık şarj kontrolü ----
+  async function hatSeç(hat) {
+    seciliHat = hat;
+    ekranGoster('ekran-sarj-durumu');
+    document.getElementById('sarj-durumu-baslik').textContent = hat;
+    const icerik = document.getElementById('sarj-durumu-icerik');
+    icerik.className = 'yukleniyor';
+    icerik.textContent = 'Kontrol ediliyor…';
+
+    try {
+      const sonuc = await apiGet('acikSarjVarMi', { hat });
+      icerik.className = '';
+      if (sonuc.basarili && sonuc.veri.acikSarjVar) {
+        const s = sonuc.veri;
+        icerik.innerHTML = `
+          <div class="rozet">AÇIK ŞARJ VAR</div>
+          <div class="kart">
+            <div class="satir"><span>Parti No</span><b>${s.partiNo}</b></div>
+            <div class="satir"><span>Ürün</span><b>${s.urunKodu}</b></div>
+            <div class="satir"><span>Üretim Tarihi</span><b>${s.uretimTarihi || '-'}</b></div>
+            <div class="satir"><span>SKT</span><b>${s.skt || '-'}</b></div>
+            <div class="satir"><span>Başlatan</span><b>${s.baslatan}</b></div>
+            <div class="satir"><span>Başlangıç</span><b>${s.baslangic}</b></div>
+          </div>
+          <button disabled>Saatlik Kontrol (sırada)</button>
+        `;
+      } else {
+        icerik.innerHTML = `
+          <div class="rozet" style="background:var(--gri)">AÇIK ŞARJ YOK</div>
+          <p style="color:var(--gri); font-size:14px;">Bu hatta şu an açık bir şarj bulunmuyor.</p>
+          <button id="btn-sihirbaz-baslat">Şarj Başlatma Sihirbazını Başlat</button>
+        `;
+        document.getElementById('btn-sihirbaz-baslat').addEventListener('click', sihirbaziBaslat);
+      }
+    } catch (err) {
+      icerik.className = 'hata';
+      icerik.textContent = 'Bağlantı hatası: ' + err.message;
+    }
+  }
+
+  document.getElementById('btn-geri-hatlara').addEventListener('click', hatlariYukleVeGoster);
+  document.getElementById('btn-cikis').addEventListener('click', () => {
+    mevcutKullanici = null;
+    document.getElementById('giris-ad').value = '';
+    document.getElementById('giris-pin').value = '';
+    ekranGoster('ekran-giris');
+  });
+
+  // ================================================================
+  // ŞARJ BAŞLATMA SİHİRBAZI
+  // ================================================================
+
+  function sihirbaziBaslat() {
+    sihirbaz = { urun: null, partiNo: null, uretimTarihi: null, skt: null };
+    document.getElementById('itd-hata').textContent = '';
+    ekranGoster('ekran-sb-itd');
+  }
+
+  // -- Adım 1: İTD Onayı --
+  document.getElementById('itd-evet').addEventListener('click', () => {
+    document.getElementById('spool-onay').checked = false;
+    document.getElementById('spool-hata').textContent = '';
+    ekranGoster('ekran-sb-spool');
+  });
+  document.getElementById('itd-hayir').addEventListener('click', () => {
+    document.getElementById('itd-hata').textContent = 'İTD onayı olmadan şarj başlatılamaz. KKL onayını bekleyin.';
+  });
+
+  // -- Adım 2: Spool/Sipariş Eşleşme --
+  document.getElementById('btn-spool-devam').addEventListener('click', async () => {
+    const hataKutusu = document.getElementById('spool-hata');
+    if (!document.getElementById('spool-onay').checked) {
+      hataKutusu.textContent = 'Devam etmeden önce eşleşmeyi onaylamalısın.';
+      return;
+    }
+    hataKutusu.textContent = '';
+    await urunListesiniYukleVeGoster();
+  });
+
+  // -- Adım 3: Ürün Seçimi + Parti No --
+  async function urunListesiniYukleVeGoster() {
+    ekranGoster('ekran-sb-urun');
+    const secimKutusu = document.getElementById('urun-secimi');
+    secimKutusu.innerHTML = '<option value="">Yükleniyor…</option>';
+    document.getElementById('parti-no-girisi').value = '';
+    document.getElementById('urun-hata').textContent = '';
+
+    try {
+      const sonuc = await apiGet('urunleriGetir', {});
+      if (!sonuc.basarili || sonuc.veri.length === 0) {
+        secimKutusu.innerHTML = '<option value="">Ürün bulunamadı</option>';
+        return;
+      }
+      urunListesi = sonuc.veri;
+      secimKutusu.innerHTML = '<option value="">Seçiniz…</option>' +
+        urunListesi.map(u => `<option value="${u.sapUrunAdi}">${u.sapUrunAdi}</option>`).join('');
+    } catch (err) {
+      document.getElementById('urun-hata').textContent = 'Bağlantı hatası: ' + err.message;
+    }
+  }
+
+  document.getElementById('btn-urun-devam').addEventListener('click', () => {
+    const secilenAd = document.getElementById('urun-secimi').value;
+    const partiNo = document.getElementById('parti-no-girisi').value.trim();
+    const hataKutusu = document.getElementById('urun-hata');
+
+    if (!secilenAd) {
+      hataKutusu.textContent = 'Bir ürün seçmelisin.';
+      return;
+    }
+    if (!partiNo) {
+      hataKutusu.textContent = 'Parti no girmelisin.';
+      return;
+    }
+    sihirbaz.urun = urunListesi.find(u => u.sapUrunAdi === secilenAd);
+    sihirbaz.partiNo = partiNo;
+    hataKutusu.textContent = '';
+    testleriGoster();
+  });
+
+  // -- Adım 4: Challenge Testleri --
+  function testleriGoster() {
+    const liste = document.getElementById('test-listesi');
+    liste.innerHTML = CHALLENGE_TESTLERI.map(t => `
+      <div class="onay-kutusu">
+        <input type="checkbox" id="${t.id}" />
+        <label for="${t.id}" style="margin:0;">${t.metin}</label>
+      </div>
+    `).join('');
+    document.getElementById('testler-hata').textContent = '';
+    ekranGoster('ekran-sb-testler');
+  }
+
+  document.getElementById('btn-testler-devam').addEventListener('click', () => {
+    const hepsiOnayli = CHALLENGE_TESTLERI.every(t => document.getElementById(t.id).checked);
+    if (!hepsiOnayli) {
+      document.getElementById('testler-hata').textContent = 'Devam etmeden önce tüm testleri onaylamalısın.';
+      return;
+    }
+    lidAdiminiSifirla();
+    ekranGoster('ekran-sb-lid');
+  });
+
+  // -- Adım 5: İlk Ürün Lid Kontrolü (karekod okuma + manuel giriş) --
+
+  function lidAdiminiSifirla() {
+    sihirbaz.uretimTarihi = null;
+    sihirbaz.skt = null;
+    document.getElementById('karekod-sonuc').innerHTML = '';
+    document.getElementById('parti-uyumsuzluk').style.display = 'none';
+    document.getElementById('btn-lid-devam').disabled = true;
+    document.getElementById('manuel-parti-no').value = '';
+    document.getElementById('manuel-uretim-tarihi').value = '';
+    document.getElementById('karekod-hata').textContent = '';
+    document.getElementById('manuel-hata').textContent = '';
+    karekodTaramayiDurdur();
+    lidSekmeSec('tarama');
+  }
+
+  function lidSekmeSec(sekme) {
+    const tarama = sekme === 'tarama';
+    document.getElementById('lid-sekme-tarama').classList.toggle('secili', tarama);
+    document.getElementById('lid-sekme-manuel').classList.toggle('secili', !tarama);
+    document.getElementById('lid-panel-tarama').style.display = tarama ? 'block' : 'none';
+    document.getElementById('lid-panel-manuel').style.display = tarama ? 'none' : 'block';
+    if (!tarama) karekodTaramayiDurdur();
+  }
+  document.getElementById('lid-sekme-tarama').addEventListener('click', () => lidSekmeSec('tarama'));
+  document.getElementById('lid-sekme-manuel').addEventListener('click', () => lidSekmeSec('manuel'));
+
+  /**
+   * Blister üzerindeki karekodun beklenen ham metin formatı:
+   *   "33960/15062026 FLTSLM500/50"
+   *    ^partiNo ^gün ay yıl (DDMMYYYY)  ^ürün kodu (referans amaçlı, doğrulamada kullanılmıyor)
+   */
+  function karekodMetniCoz(metin) {
+    const eslesme = String(metin).trim().match(/^(\d+)\/(\d{2})(\d{2})(\d{4})\s*(.*)$/);
+    if (!eslesme) return null;
+    const [, partiNo, gun, ay, yil, urunKoduHam] = eslesme;
+    const uretimTarihi = new Date(Number(yil), Number(ay) - 1, Number(gun));
+    return { partiNo, uretimTarihi, urunKoduHam };
+  }
+
+  function sktHesapla(uretimTarihi, miatAy) {
+    const d = new Date(uretimTarihi.getTime());
+    d.setMonth(d.getMonth() + Number(miatAy));
+    const ay = String(d.getMonth() + 1).padStart(2, '0');
+    return `${ay}/${d.getFullYear()}`;
+  }
+
+  function lidVeriIsle(veri) {
+    const sktMetni = sktHesapla(veri.uretimTarihi, sihirbaz.urun.miat);
+    const tarihGosterim = veri.uretimTarihi.toLocaleDateString('tr-TR');
+
+    document.getElementById('karekod-sonuc').innerHTML = `
+      <div class="kart">
+        <div class="satir"><span>Parti No</span><b>${veri.partiNo}</b></div>
+        <div class="satir"><span>Üretim Tarihi</span><b>${tarihGosterim}</b></div>
+        <div class="satir"><span>Hesaplanan SKT</span><b>${sktMetni}</b></div>
+        ${veri.urunKoduHam ? `<div class="satir"><span>Ürün Kodu (koddan)</span><b>${veri.urunKoduHam}</b></div>` : ''}
+      </div>
+    `;
+
+    const uyumsuzlukKutusu = document.getElementById('parti-uyumsuzluk');
+    if (String(veri.partiNo) !== String(sihirbaz.partiNo)) {
+      uyumsuzlukKutusu.style.display = 'block';
+      uyumsuzlukKutusu.textContent = `Uyarı: Adım 3'te girilen parti no (${sihirbaz.partiNo}) ile okunan parti no (${veri.partiNo}) uyuşmuyor! Ürünü/etiketi kontrol edip tekrar okut ya da doğru parti no ile Adım 3'e dön.`;
+      document.getElementById('btn-lid-devam').disabled = true;
+      sihirbaz.uretimTarihi = null;
+      sihirbaz.skt = null;
+    } else {
+      uyumsuzlukKutusu.style.display = 'none';
+      document.getElementById('btn-lid-devam').disabled = false;
+      sihirbaz.uretimTarihi = veri.uretimTarihi;
+      sihirbaz.skt = sktMetni;
+    }
+  }
+
+  // -- Karekod kamera taraması (Data Matrix, ZXing) --
+  let zxingOkuyucu = null;
+
+  async function karekodTaramayaBasla() {
+    document.getElementById('karekod-hata').textContent = '';
+    document.getElementById('karekod-video-alani').style.display = 'block';
+    try {
+      const hints = new Map();
+      hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.DATA_MATRIX]);
+      zxingOkuyucu = new ZXing.BrowserMultiFormatReader(hints);
+
+      const cihazlar = await zxingOkuyucu.listVideoInputDevices();
+      const arkaKamera = cihazlar.find(c => /back|arka|rear|environment/i.test(c.label));
+      const seciliCihazId = arkaKamera ? arkaKamera.deviceId : (cihazlar[cihazlar.length - 1] || {}).deviceId;
+
+      zxingOkuyucu.decodeFromVideoDevice(seciliCihazId, 'karekod-video', (sonuc) => {
+        if (!sonuc) return;
+        const metin = sonuc.text || (sonuc.getText && sonuc.getText());
+        const cozulen = karekodMetniCoz(metin);
+        if (cozulen) {
+          lidVeriIsle(cozulen);
+          karekodTaramayiDurdur();
+        } else {
+          document.getElementById('karekod-hata').textContent = `Okunan kod beklenen formatta değil: "${metin}"`;
+        }
+      });
+    } catch (err) {
+      document.getElementById('karekod-hata').textContent = 'Kamera açılamadı: ' + err.message;
+    }
+  }
+
+  function karekodTaramayiDurdur() {
+    if (zxingOkuyucu) {
+      zxingOkuyucu.reset();
+    }
+    document.getElementById('karekod-video-alani').style.display = 'none';
+  }
+
+  document.getElementById('btn-tarama-baslat').addEventListener('click', karekodTaramayaBasla);
+  document.getElementById('btn-tarama-durdur').addEventListener('click', karekodTaramayiDurdur);
+
+  // -- Manuel giriş --
+  document.getElementById('btn-manuel-uygula').addEventListener('click', () => {
+    const partiNo = document.getElementById('manuel-parti-no').value.trim();
+    const tarihStr = document.getElementById('manuel-uretim-tarihi').value; // YYYY-MM-DD
+    const hataKutusu = document.getElementById('manuel-hata');
+    if (!partiNo || !tarihStr) {
+      hataKutusu.textContent = 'Parti no ve üretim tarihi gerekli.';
+      return;
+    }
+    hataKutusu.textContent = '';
+    const [yil, ay, gun] = tarihStr.split('-').map(Number);
+    lidVeriIsle({ partiNo, uretimTarihi: new Date(yil, ay - 1, gun), urunKoduHam: null });
+  });
+
+  document.getElementById('btn-lid-devam').addEventListener('click', numuneGoster);
+
+  // -- Adım 6: Numune Alma --
+  function numuneHesapla(urun) {
+    const numuneler = [
+      { ad: 'KKL Numunesi', dagilim: { 1: 6, 5: 5, 8: 6, 12: 5 }, aktif: true },
+      { ad: 'RAF Numunesi', dagilim: { 1: 12, 5: 12, 8: 12, 12: 12 }, aktif: true },
+      { ad: 'Referans Numunesi', dagilim: { 1: 12, 5: 12, 8: 12, 12: 12 }, aktif: urun.referansNumune },
+      { ad: 'AB Test Numunesi', dagilim: { 1: 9, 5: 9, 8: 9, 12: 9 }, aktif: urun.abTest }
+    ];
+    return numuneler.filter(n => n.aktif);
+  }
+
+  function numuneGoster() {
+    const icerik = document.getElementById('numune-icerik');
+    const numuneler = numuneHesapla(sihirbaz.urun);
+    icerik.innerHTML = numuneler.map(n => {
+      const toplam = Object.values(n.dagilim).reduce((a, b) => a + b, 0);
+      const spoolSatirlari = Object.entries(n.dagilim)
+        .map(([spool, adet]) => `<div class="satir"><span>Spool ${spool}</span><b>${adet} adet</b></div>`)
+        .join('');
+      return `
+        <div class="numune-basligi">${n.ad} — Toplam ${toplam} adet</div>
+        <div class="kart">${spoolSatirlari}</div>
+      `;
+    }).join('');
+    ekranGoster('ekran-sb-numune');
+  }
+
+  document.getElementById('btn-numune-devam').addEventListener('click', ozetGoster);
+
+  // -- Adım 7: Özet / Onay --
+  function ozetGoster() {
+    const u = sihirbaz.urun;
+    document.getElementById('ozet-kart').innerHTML = `
+      <div class="satir"><span>Hat</span><b>${seciliHat}</b></div>
+      <div class="satir"><span>Ürün</span><b>${u.sapUrunAdi}</b></div>
+      <div class="satir"><span>Ruhsat Sahibi</span><b>${u.ruhsatSahibi}</b></div>
+      <div class="satir"><span>Ülke</span><b>${u.ulke}</b></div>
+      <div class="satir"><span>Parti No</span><b>${sihirbaz.partiNo}</b></div>
+      <div class="satir"><span>Üretim Tarihi</span><b>${sihirbaz.uretimTarihi.toLocaleDateString('tr-TR')}</b></div>
+      <div class="satir"><span>SKT</span><b>${sihirbaz.skt}</b></div>
+    `;
+    document.getElementById('ozet-hata').textContent = '';
+    ekranGoster('ekran-sb-ozet');
+  }
+
+  document.getElementById('btn-sarj-onayla').addEventListener('click', async () => {
+    const buton = document.getElementById('btn-sarj-onayla');
+    const hataKutusu = document.getElementById('ozet-hata');
+    buton.disabled = true;
+    hataKutusu.textContent = '';
+
+    try {
+      const sonuc = await apiPost({
+        islem: 'sarjBaslat',
+        hat: seciliHat,
+        urunKodu: sihirbaz.urun.sapUrunAdi,
+        partiNo: sihirbaz.partiNo,
+        uretimTarihi: sihirbaz.uretimTarihi.toLocaleDateString('tr-TR'),
+        skt: sihirbaz.skt,
+        baslatan: mevcutKullanici ? mevcutKullanici.ad : ''
+      });
+      if (sonuc.basarili) {
+        await hatSeç(seciliHat); // açık şarj kartını göstererek doğrula
+      } else {
+        hataKutusu.textContent = sonuc.mesaj || 'Şarj başlatılamadı.';
+        buton.disabled = false;
+      }
+    } catch (err) {
+      hataKutusu.textContent = 'Bağlantı hatası: ' + err.message;
+      buton.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
