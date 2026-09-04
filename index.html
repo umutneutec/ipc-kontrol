@@ -29,6 +29,10 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   }
   header .logo-neu { color: var(--kirmizi); font-weight: 800; }
   header .logo-tec { color: #B9BABC; font-weight: 800; }
@@ -43,7 +47,18 @@
   .ekran { display: none; }
   .ekran.aktif { display: block; }
   h2 { font-size: 18px; margin: 0 0 4px; }
-  .adim-etiketi { font-size: 12px; color: var(--gri); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .adim-etiketi {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--kirmizi);
+    background: #FCE8E6;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
   label { display: block; font-size: 13px; color: var(--gri); margin: 14px 0 4px; }
   input[type=text], input[type=password], input[type=date], select {
     width: 100%;
@@ -130,6 +145,9 @@
   .gorsel-kutu span { display: block; font-size: 11px; color: var(--gri); margin-top: 4px; }
   .arama-sonuc-listesi { max-height: 320px; overflow-y: auto; }
 
+  .ilerleme-ust { height: 4px; background: #EAEAEC; border-radius: 3px; margin-bottom: 18px; overflow: hidden; }
+  .ilerleme-ust-dolu { height: 100%; border-radius: 3px; background: var(--kirmizi); transition: width 0.25s ease; }
+
   .urun-ozet-kart {
     display: flex;
     align-items: center;
@@ -210,6 +228,10 @@
 </header>
 
 <main>
+
+  <div id="sihirbaz-ilerleme-yolu" class="ilerleme-ust" style="display:none;">
+    <div id="sihirbaz-ilerleme-dolu" class="ilerleme-ust-dolu" style="width:0%;"></div>
+  </div>
 
   <!-- 1) GİRİŞ EKRANI -->
   <section id="ekran-giris" class="ekran aktif">
@@ -405,9 +427,28 @@
       : '<span style="color:var(--gri);font-weight:800;">&#10005;</span>';
   }
 
+  const SIHIRBAZ_ADIMLARI = {
+    'ekran-sb-itd': 1, 'ekran-sb-spool': 2, 'ekran-sb-urun': 3,
+    'ekran-sb-testler': 4, 'ekran-sb-lid': 5, 'ekran-sb-numune': 6, 'ekran-sb-ozet': 7
+  };
+
   function ekranGoster(id) {
     document.querySelectorAll('.ekran').forEach(e => e.classList.remove('aktif'));
     document.getElementById(id).classList.add('aktif');
+
+    // Yeni ekran her zaman en üstten başlasın (önceki ekranda aşağı kaydırılmış olsa bile).
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+
+    const ilerlemeYolu = document.getElementById('sihirbaz-ilerleme-yolu');
+    const adim = SIHIRBAZ_ADIMLARI[id];
+    if (adim) {
+      ilerlemeYolu.style.display = 'block';
+      document.getElementById('sihirbaz-ilerleme-dolu').style.width = (adim / 7 * 100) + '%';
+    } else {
+      ilerlemeYolu.style.display = 'none';
+    }
   }
 
   async function apiGet(islem, parametreler) {
@@ -553,7 +594,7 @@
   // ================================================================
 
   function sihirbaziBaslat() {
-    sihirbaz = { urun: null, partiNo: null, uretimTarihi: null, skt: null };
+    sihirbaz = { urun: null, partiNo: null, uretimTarihi: null, skt: null, onLidUrl: null, arkaLidUrl: null };
     document.getElementById('itd-hata').textContent = '';
     ekranGoster('ekran-sb-itd');
   }
@@ -708,6 +749,8 @@
     try {
       const sonuc = await apiGet('urunGorselleriGetir', { sapUrunAdi: sihirbaz.urun.sapUrunAdi });
       if (sonuc.basarili && (sonuc.onLid || sonuc.arkaLid)) {
+        sihirbaz.onLidUrl = sonuc.onLid || null;
+        sihirbaz.arkaLidUrl = sonuc.arkaLid || null;
         alan.className = '';
         alan.innerHTML = `
           <div class="gorsel-satiri">
@@ -722,6 +765,8 @@
           </div>
         `;
       } else {
+        sihirbaz.onLidUrl = null;
+        sihirbaz.arkaLidUrl = null;
         alan.className = 'hata';
         let mesaj = sonuc.mesaj || 'Referans görseller bulunamadı — Drive klasörünü kontrol et.';
         if (sonuc.mevcutKlasorAdlari && sonuc.mevcutKlasorAdlari.length) {
@@ -730,9 +775,21 @@
         alan.textContent = mesaj;
       }
     } catch (err) {
+      sihirbaz.onLidUrl = null;
+      sihirbaz.arkaLidUrl = null;
       alan.className = 'hata';
       alan.textContent = 'Görseller yüklenemedi: ' + err.message;
     }
+  }
+
+  function lidGorselleriHtml() {
+    if (!sihirbaz.onLidUrl && !sihirbaz.arkaLidUrl) return '';
+    return `
+      <div class="gorsel-satiri">
+        <div class="gorsel-kutu">${sihirbaz.onLidUrl ? `<img src="${sihirbaz.onLidUrl}" />` : '<div class="kart">Yok</div>'}<span>Ön Lid (Referans)</span></div>
+        <div class="gorsel-kutu">${sihirbaz.arkaLidUrl ? `<img src="${sihirbaz.arkaLidUrl}" />` : '<div class="kart">Yok</div>'}<span>Arka Lid (Referans)</span></div>
+      </div>
+    `;
   }
 
   function lidAdiminiSifirla() {
@@ -971,6 +1028,8 @@
       </div>
     `;
 
+    html += lidGorselleriHtml();
+
     if (ekNumuneler.length) {
       html += `
         <div class="ek-numune-kart">
@@ -1030,6 +1089,7 @@
   function ozetGoster() {
     const u = sihirbaz.urun;
     document.getElementById('ozet-kart').innerHTML = `
+      ${lidGorselleriHtml()}
       <div class="satir"><span>Hat</span><b>${seciliHat}</b></div>
       <div class="satir"><span>Ürün</span><b>${u.sapUrunAdi}</b></div>
       <div class="satir"><span>Ruhsat Sahibi</span><b>${u.ruhsatSahibi}</b></div>
