@@ -470,6 +470,20 @@
     <div id="karekod-sonuc"></div>
     <div class="uyari-kutusu kritik" id="parti-uyumsuzluk" style="display:none;"></div>
 
+    <label style="margin-top:20px;">İlk Üretilen Cihazın Fotoğrafı</label>
+    <p class="aciklama">Referans görsellerle karşılaştırdığın bu ilk cihazın ön ve arka lid fotoğrafını da buradan kaydet — kayıt aktif şarja etiketlenip Yönetici Paneli'nde görünür olacak.</p>
+    <input type="file" id="ilk-urun-on-lid-input" accept="image/*" capture="environment" style="display:none;" />
+    <button class="ikincil kucuk" id="btn-ilk-urun-on-lid-cek">Ön Lid Fotoğrafı Çek</button>
+    <div class="gorsel-satiri" id="ilk-urun-on-lid-onizleme" style="display:none;">
+      <div class="gorsel-kutu"><img id="ilk-urun-on-lid-img" /><span>Ön Lid (Çekilen)</span></div>
+    </div>
+
+    <input type="file" id="ilk-urun-arka-lid-input" accept="image/*" capture="environment" style="display:none;" />
+    <button class="ikincil kucuk" id="btn-ilk-urun-arka-lid-cek">Arka Lid Fotoğrafı Çek</button>
+    <div class="gorsel-satiri" id="ilk-urun-arka-lid-onizleme" style="display:none;">
+      <div class="gorsel-kutu"><img id="ilk-urun-arka-lid-img" /><span>Arka Lid (Çekilen)</span></div>
+    </div>
+
     <button id="btn-lid-devam" disabled>Devam Et</button>
     <button class="ikincil geri" id="btn-geri-lid">Geri</button>
   </section>
@@ -521,6 +535,7 @@
   <section id="ekran-yonetici-detay" class="ekran">
     <h2>Şarj Detayı</h2>
     <div class="kart" id="yonetici-detay-kart"></div>
+    <div id="yonetici-ilk-urun-lid-alani"></div>
     <h2 style="margin-top:24px; font-size:15px;">Saatlik Kontrol Kayıtları</h2>
     <div id="yonetici-saatlik-liste" class="yukleniyor">Yükleniyor…</div>
     <button class="ikincil geri" id="btn-geri-yonetici-detay">Panele Dön</button>
@@ -828,6 +843,31 @@
     `;
     ekranGoster('ekran-yonetici-detay');
 
+    const ilkUrunAlani = document.getElementById('yonetici-ilk-urun-lid-alani');
+    ilkUrunAlani.innerHTML = '';
+    if (s.ilkUrunFotografVar) {
+      ilkUrunAlani.innerHTML = '<h2 style="margin-top:24px; font-size:15px;">İlk Ürün Lid Kontrolü Fotoğrafları</h2><div class="yukleniyor" id="yonetici-ilk-urun-lid-icerik">Yükleniyor…</div>';
+      apiGet('sarjIlkUrunLidGorselleriGetir', { sarjId }).then(sonuc => {
+        const icerik = document.getElementById('yonetici-ilk-urun-lid-icerik');
+        if (!icerik) return;
+        if (sonuc.basarili) {
+          icerik.className = '';
+          icerik.innerHTML = `
+            <div class="gorsel-satiri">
+              <div class="gorsel-kutu">${sonuc.onLid ? `<img src="${sonuc.onLid}" />` : '<div class="kart">Yok</div>'}<span>Ön Lid</span></div>
+              <div class="gorsel-kutu">${sonuc.arkaLid ? `<img src="${sonuc.arkaLid}" />` : '<div class="kart">Yok</div>'}<span>Arka Lid</span></div>
+            </div>
+          `;
+        } else {
+          icerik.className = 'hata';
+          icerik.textContent = sonuc.mesaj || 'Görseller alınamadı.';
+        }
+      }).catch(err => {
+        const icerik = document.getElementById('yonetici-ilk-urun-lid-icerik');
+        if (icerik) { icerik.className = 'hata'; icerik.textContent = 'Bağlantı hatası: ' + err.message; }
+      });
+    }
+
     const saatlikListe = document.getElementById('yonetici-saatlik-liste');
     saatlikListe.className = 'yukleniyor';
     saatlikListe.textContent = 'Yükleniyor…';
@@ -1075,7 +1115,7 @@
   // ================================================================
 
   function sihirbaziBaslat() {
-    sihirbaz = { urun: null, partiNo: null, uretimTarihi: null, skt: null, onLidUrl: null, arkaLidUrl: null };
+    sihirbaz = { urun: null, partiNo: null, uretimTarihi: null, skt: null, onLidUrl: null, arkaLidUrl: null, ilkUrunOnLid: null, ilkUrunArkaLid: null };
     document.getElementById('itd-hata').textContent = '';
     ekranGoster('ekran-sb-itd');
   }
@@ -1276,6 +1316,8 @@
   function lidAdiminiSifirla() {
     sihirbaz.uretimTarihi = null;
     sihirbaz.skt = null;
+    sihirbaz.ilkUrunOnLid = null;
+    sihirbaz.ilkUrunArkaLid = null;
     document.getElementById('karekod-sonuc').innerHTML = '';
     document.getElementById('parti-uyumsuzluk').style.display = 'none';
     document.getElementById('btn-lid-devam').disabled = true;
@@ -1283,6 +1325,8 @@
     document.getElementById('manuel-uretim-tarihi').value = '';
     document.getElementById('karekod-hata').textContent = '';
     document.getElementById('manuel-hata').textContent = '';
+    document.getElementById('ilk-urun-on-lid-onizleme').style.display = 'none';
+    document.getElementById('ilk-urun-arka-lid-onizleme').style.display = 'none';
     karekodTaramayiDurdur();
     lidSekmeSec('tarama');
   }
@@ -1353,15 +1397,24 @@
     if (String(veri.partiNo) !== String(sihirbaz.partiNo)) {
       uyumsuzlukKutusu.style.display = 'block';
       uyumsuzlukKutusu.textContent = `Uyarı: Adım 3'te girilen parti no (${sihirbaz.partiNo}) ile okunan parti no (${veri.partiNo}) uyuşmuyor! Ürünü/etiketi kontrol edip tekrar okut ya da doğru parti no ile Adım 3'e dön.`;
-      document.getElementById('btn-lid-devam').disabled = true;
       sihirbaz.uretimTarihi = null;
       sihirbaz.skt = null;
     } else {
       uyumsuzlukKutusu.style.display = 'none';
-      document.getElementById('btn-lid-devam').disabled = false;
       sihirbaz.uretimTarihi = veri.uretimTarihi;
       sihirbaz.skt = sktMetni;
     }
+    lidDevamDurumunuGuncelle();
+  }
+
+  /**
+   * "Devam Et" butonu ancak hem karekod/manuel giriş geçerliyse HEM DE
+   * ilk üretilen cihazın ön+arka lid fotoğrafları çekilmişse aktif olur.
+   */
+  function lidDevamDurumunuGuncelle() {
+    const veriGecerli = !!(sihirbaz.uretimTarihi && sihirbaz.skt);
+    const fotograflarTam = !!(sihirbaz.ilkUrunOnLid && sihirbaz.ilkUrunArkaLid);
+    document.getElementById('btn-lid-devam').disabled = !(veriGecerli && fotograflarTam);
   }
 
   // -- Karekod kamera taraması (Data Matrix, ZXing) --
@@ -1662,6 +1715,37 @@
 
   document.getElementById('btn-lid-devam').addEventListener('click', numuneGoster);
 
+  document.getElementById('btn-ilk-urun-on-lid-cek').addEventListener('click', () => document.getElementById('ilk-urun-on-lid-input').click());
+  document.getElementById('btn-ilk-urun-arka-lid-cek').addEventListener('click', () => document.getElementById('ilk-urun-arka-lid-input').click());
+
+  document.getElementById('ilk-urun-on-lid-input').addEventListener('change', async (e) => {
+    const dosya = e.target.files[0];
+    if (!dosya) return;
+    try {
+      sihirbaz.ilkUrunOnLid = await resizeVeBase64eCevir(dosya);
+      document.getElementById('ilk-urun-on-lid-img').src = sihirbaz.ilkUrunOnLid;
+      document.getElementById('ilk-urun-on-lid-onizleme').style.display = 'flex';
+      lidDevamDurumunuGuncelle();
+    } catch (err) {
+      document.getElementById('karekod-hata').textContent = 'Fotoğraf işlenemedi: ' + err.message;
+    }
+    e.target.value = '';
+  });
+
+  document.getElementById('ilk-urun-arka-lid-input').addEventListener('change', async (e) => {
+    const dosya = e.target.files[0];
+    if (!dosya) return;
+    try {
+      sihirbaz.ilkUrunArkaLid = await resizeVeBase64eCevir(dosya);
+      document.getElementById('ilk-urun-arka-lid-img').src = sihirbaz.ilkUrunArkaLid;
+      document.getElementById('ilk-urun-arka-lid-onizleme').style.display = 'flex';
+      lidDevamDurumunuGuncelle();
+    } catch (err) {
+      document.getElementById('karekod-hata').textContent = 'Fotoğraf işlenemedi: ' + err.message;
+    }
+    e.target.value = '';
+  });
+
   // -- Adım 6: Numune Alma --
   const AVATAR_PALETI = ['#E4342A', '#3B82F6', '#8B5CF6', '#F97316', '#0EA5A4', '#DB2777'];
 
@@ -1756,10 +1840,22 @@
   document.getElementById('btn-numune-devam').addEventListener('click', ozetGoster);
 
   // -- Adım 7: Özet / Onay --
+  function cekilenIlkUrunLidGorselleriHtml() {
+    if (!sihirbaz.ilkUrunOnLid && !sihirbaz.ilkUrunArkaLid) return '';
+    return `
+      <p class="aciklama" style="margin-top:12px;">İlk üretilen cihazın çekilen fotoğrafları:</p>
+      <div class="gorsel-satiri">
+        <div class="gorsel-kutu">${sihirbaz.ilkUrunOnLid ? `<img src="${sihirbaz.ilkUrunOnLid}" />` : '<div class="kart">Yok</div>'}<span>Ön Lid</span></div>
+        <div class="gorsel-kutu">${sihirbaz.ilkUrunArkaLid ? `<img src="${sihirbaz.ilkUrunArkaLid}" />` : '<div class="kart">Yok</div>'}<span>Arka Lid</span></div>
+      </div>
+    `;
+  }
+
   function ozetGoster() {
     const u = sihirbaz.urun;
     document.getElementById('ozet-kart').innerHTML = `
       ${lidGorselleriHtml()}
+      ${cekilenIlkUrunLidGorselleriHtml()}
       <div class="satir"><span>Hat</span><b>${seciliHat}</b></div>
       <div class="satir"><span>Ürün</span><b>${u.sapUrunAdi}</b></div>
       <div class="satir"><span>Ruhsat Sahibi</span><b>${u.ruhsatSahibi}</b></div>
@@ -1788,7 +1884,9 @@
         partiNo: sihirbaz.partiNo,
         uretimTarihi: sihirbaz.uretimTarihi.toLocaleDateString('tr-TR'),
         skt: sihirbaz.skt,
-        baslatan: mevcutKullanici ? mevcutKullanici.ad : ''
+        baslatan: mevcutKullanici ? mevcutKullanici.ad : '',
+        ilkUrunOnLidBase64: sihirbaz.ilkUrunOnLid,
+        ilkUrunArkaLidBase64: sihirbaz.ilkUrunArkaLid
       });
       if (sonuc.basarili) {
         await hatSeç(seciliHat); // açık şarj kartını göstererek doğrula
