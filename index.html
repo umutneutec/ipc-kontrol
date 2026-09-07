@@ -16,27 +16,40 @@
   body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: var(--arkaplan);
+    background: linear-gradient(180deg, #F7F7F8 0%, #EFEFF1 100%);
     color: var(--gri-koyu);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
   }
   header {
-    background: var(--gri-koyu);
+    background: linear-gradient(135deg, #323234 0%, var(--gri-koyu) 100%);
     color: white;
-    padding: 18px 20px;
+    padding: 16px 20px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     position: sticky;
     top: 0;
     z-index: 10;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.18);
   }
-  header .logo-neu { color: var(--kirmizi); font-weight: 800; }
-  header .logo-tec { color: #B9BABC; font-weight: 800; }
-  header h1 { font-size: 16px; margin: 0; font-weight: 500; opacity: 0.85; }
+  header .app-ikon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--kirmizi), #B8261E);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 14px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(228,52,42,0.4);
+  }
+  header .logo-neu { color: var(--kirmizi); font-weight: 800; font-size: 12px; }
+  header .logo-tec { color: #B9BABC; font-weight: 800; font-size: 12px; }
+  header h1 { font-size: 16px; margin: 1px 0 0; font-weight: 600; }
   main {
     flex: 1;
     padding: 20px;
@@ -45,7 +58,11 @@
     width: 100%;
   }
   .ekran { display: none; }
-  .ekran.aktif { display: block; }
+  .ekran.aktif { display: block; animation: ekranGir 0.22s ease; }
+  @keyframes ekranGir {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
   h2 { font-size: 18px; margin: 0 0 4px; }
   .adim-etiketi {
     display: inline-block;
@@ -80,12 +97,15 @@
     font-weight: 600;
     cursor: pointer;
     box-shadow: 0 2px 6px rgba(228,52,42,0.25);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
   }
-  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button:active { transform: scale(0.98); box-shadow: 0 1px 3px rgba(228,52,42,0.25); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
   button.ikincil {
     background: var(--beyaz);
     color: var(--gri-koyu);
     border: 1px solid #D8D8DA;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   }
   button.kucuk { margin-top: 10px; padding: 10px; font-size: 14px; }
   button.geri { margin-top: 10px; }
@@ -102,8 +122,10 @@
     justify-content: space-between;
     align-items: center;
     box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    transition: transform 0.08s ease, box-shadow 0.08s ease, border-color 0.15s ease;
   }
-  .secenek:active { background: #F0F0F0; }
+  .secenek:not(.pasif):not(.sekme)::after { content: '›'; color: #C7C7CA; font-size: 20px; font-weight: 700; margin-left: 8px; }
+  .secenek:not(.pasif):active { background: #F7F7F8; transform: scale(0.985); border-color: #C7C7CA; }
   .secenek.pasif { opacity: 0.4; cursor: not-allowed; }
   .secenek .etiket-yakinda { font-size: 11px; font-weight: 500; color: var(--gri); background: #ECECEE; padding: 3px 8px; border-radius: 20px; }
   .hata { color: var(--kirmizi); font-size: 13px; margin-top: 10px; min-height: 16px; }
@@ -144,6 +166,20 @@
   .gorsel-kutu img { width: 100%; border-radius: 10px; border: 1px solid #E4E4E6; background: var(--beyaz); }
   .gorsel-kutu span { display: block; font-size: 11px; color: var(--gri); margin-top: 4px; }
   .arama-sonuc-listesi { max-height: 320px; overflow-y: auto; }
+
+  .karekod-video-sarmalayici { position: relative; }
+  .karekod-hedef {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 45%;
+    aspect-ratio: 1;
+    border: 3px solid rgba(255,255,255,0.9);
+    border-radius: 10px;
+    box-shadow: 0 0 0 2000px rgba(0,0,0,0.28);
+    pointer-events: none;
+  }
 
   .ilerleme-ust { height: 4px; background: #EAEAEC; border-radius: 3px; margin-bottom: 18px; overflow: hidden; }
   .ilerleme-ust-dolu { height: 100%; border-radius: 3px; background: var(--kirmizi); transition: width 0.25s ease; }
@@ -223,8 +259,11 @@
 <body>
 
 <header>
-  <span><span class="logo-neu">neu</span><span class="logo-tec">tec</span></span>
-  <h1>IPC Kontrol</h1>
+  <div class="app-ikon">IPC</div>
+  <div>
+    <div><span class="logo-neu">neu</span><span class="logo-tec">tec</span></div>
+    <h1>IPC Kontrol</h1>
+  </div>
 </header>
 
 <main>
@@ -265,6 +304,45 @@
     <h2 id="sarj-durumu-baslik">Şarj Durumu</h2>
     <div id="sarj-durumu-icerik" class="yukleniyor">Kontrol ediliyor…</div>
     <button class="ikincil geri" id="btn-geri-makinelere">Geri</button>
+  </section>
+
+  <!-- 4.1) SAATLİK KONTROL -->
+  <section id="ekran-saatlik-kontrol" class="ekran">
+    <h2>Saatlik Kontrol</h2>
+    <p class="aciklama">Fiziksel hat kontrolünü sahada yaptıktan sonra, hattan bir ürün al ve ön/arka lid fotoğrafını buradan kaydet. Bu kayıt aktif şarja otomatik olarak etiketlenir.</p>
+    <div class="kart" id="saatlik-sarj-bilgi"></div>
+
+    <label>Ön Lid Fotoğrafı</label>
+    <input type="file" id="saatlik-on-lid-input" accept="image/*" capture="environment" style="display:none;" />
+    <button class="ikincil kucuk" id="btn-saatlik-on-lid-cek">Ön Lid Fotoğrafı Çek</button>
+    <div class="gorsel-satiri" id="saatlik-on-lid-onizleme" style="display:none;">
+      <div class="gorsel-kutu"><img id="saatlik-on-lid-img" /><span>Ön Lid</span></div>
+    </div>
+
+    <label>Arka Lid Fotoğrafı</label>
+    <input type="file" id="saatlik-arka-lid-input" accept="image/*" capture="environment" style="display:none;" />
+    <button class="ikincil kucuk" id="btn-saatlik-arka-lid-cek">Arka Lid Fotoğrafı Çek</button>
+    <div class="gorsel-satiri" id="saatlik-arka-lid-onizleme" style="display:none;">
+      <div class="gorsel-kutu"><img id="saatlik-arka-lid-img" /><span>Arka Lid</span></div>
+    </div>
+
+    <button id="btn-saatlik-kaydet">Kaydı Tamamla</button>
+    <div class="hata" id="saatlik-hata"></div>
+    <button class="ikincil geri" id="btn-geri-saatlik">Şarj Durumuna Dön</button>
+  </section>
+
+  <!-- 4.2) ŞARJ KAPAMA -->
+  <section id="ekran-sarj-kapama" class="ekran">
+    <h2>Şarjı Kapat</h2>
+    <p class="aciklama">Şarj fiilen bittiğinde bu ekrandan kapat. Verim hesabı burada yapılmaz — sadece reject/refeed adımlarının tamamlandığını teyit edip şarjı "kapalı" durumuna al.</p>
+    <div class="kart" id="kapama-sarj-bilgi"></div>
+    <div class="onay-kutusu">
+      <input type="checkbox" id="kapama-onay" />
+      <label for="kapama-onay" style="margin:0;">Reddedilip yeniden işlenen (refeed) ürünler QA gözetiminde kontrol edildi, tüm reddedilenler etiketlenip ayrıldı.</label>
+    </div>
+    <button id="btn-sarj-kapat-onayla">Şarjı Kapat</button>
+    <div class="hata" id="kapama-hata"></div>
+    <button class="ikincil geri" id="btn-geri-kapama">Şarj Durumuna Dön</button>
   </section>
 
   <!-- 5) ŞARJ BAŞLATMA SİHİRBAZI — Adım 1: İTD Onayı -->
@@ -338,8 +416,16 @@
 
     <div id="lid-panel-tarama">
       <button class="ikincil kucuk" id="btn-tarama-baslat">Kamerayı Aç</button>
+      <p class="aciklama" style="margin-top:8px;">Kodu tam yakına dayamak odağı bozar. Kamerayı yaklaşık bir el mesafesinde (10-15 cm) tut, kod ortadaki çerçevenin içine gelsin ve odaklanması için bir saniye sabit bekle.</p>
       <div id="karekod-video-alani" style="display:none; margin-top:10px;">
-        <video id="karekod-video" style="width:100%; border-radius:10px; background:#000;"></video>
+        <div class="karekod-video-sarmalayici">
+          <video id="karekod-video" style="width:100%; border-radius:10px; background:#000; display:block;"></video>
+          <div class="karekod-hedef"></div>
+        </div>
+        <div class="sekme-satiri">
+          <button class="ikincil kucuk" id="btn-tarama-yenidenodakla">Yeniden Odakla</button>
+          <button class="ikincil kucuk" id="btn-tarama-fener" style="display:none;">Fener Aç</button>
+        </div>
         <button class="ikincil kucuk" id="btn-tarama-durdur">Taramayı Durdur</button>
       </div>
     </div>
@@ -404,6 +490,9 @@
   let seciliSaha = null;
   let seciliHat = null;       // "Üretim-2 / Sortimat" gibi metin
   let urunListesi = [];       // urunleriGetir() sonucu, ürün seçiminde kullanılır
+  let acikSarj = null;        // acikSarjVarMi() sonucu — Saatlik Kontrol / Şarj Kapama ekranlarının çalıştığı açık şarj
+  let saatlikOnLidVeri = null;
+  let saatlikArkaLidVeri = null;
 
   // Şarj Başlatma Sihirbazı'nın o anki adımlardaki verisi
   let sihirbaz = {
@@ -449,6 +538,18 @@
     } else {
       ilerlemeYolu.style.display = 'none';
     }
+
+    // Bazı mobil tarayıcılarda (özellikle uygulama içi WebView'ler) DOM
+    // güncellemesi bitmeden scrollTo çağrısı etkisiz kalabiliyor —
+    // hem hemen hem bir sonraki karede hem de kısa bir gecikmeyle tekrar dene.
+    requestAnimationFrame(enUsteKaydir);
+    setTimeout(enUsteKaydir, 60);
+  }
+
+  function enUsteKaydir() {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
   }
 
   async function apiGet(islem, parametreler) {
@@ -561,6 +662,7 @@
       icerik.className = '';
       if (sonuc.basarili && sonuc.veri.acikSarjVar) {
         const s = sonuc.veri;
+        acikSarj = s;
         icerik.innerHTML = `
           <div class="rozet">AÇIK ŞARJ VAR</div>
           <div class="kart">
@@ -571,9 +673,13 @@
             <div class="satir"><span>Başlatan</span><b>${s.baslatan}</b></div>
             <div class="satir"><span>Başlangıç</span><b>${s.baslangic}</b></div>
           </div>
-          <button disabled>Saatlik Kontrol (sırada)</button>
+          <button id="btn-saatlik-kontrol-git">Saatlik Kontrol Yap</button>
+          <button class="ikincil" id="btn-sarj-kapat-git">Şarjı Kapat</button>
         `;
+        document.getElementById('btn-saatlik-kontrol-git').addEventListener('click', saatlikKontrolEkraniniAc);
+        document.getElementById('btn-sarj-kapat-git').addEventListener('click', sarjKapamaEkraniniAc);
       } else {
+        acikSarj = null;
         icerik.innerHTML = `
           <div class="rozet" style="background:var(--gri)">AÇIK ŞARJ YOK</div>
           <p style="color:var(--gri); font-size:14px;">Bu hatta şu an açık bir şarj bulunmuyor.</p>
@@ -588,6 +694,152 @@
   }
 
   document.getElementById('btn-geri-makinelere').addEventListener('click', () => makineleriGoster(seciliSaha));
+
+  // ================================================================
+  // SAATLİK KONTROL
+  // ================================================================
+
+  function resizeVeBase64eCevir(dosya, maxGenislik = 1280, kalite = 0.8) {
+    return new Promise((resolve, reject) => {
+      const okuyucu = new FileReader();
+      okuyucu.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const olcek = Math.min(1, maxGenislik / img.width);
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width * olcek;
+          canvas.height = img.height * olcek;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/jpeg', kalite));
+        };
+        img.onerror = () => reject(new Error('Görsel yüklenemedi'));
+        img.src = okuyucu.result;
+      };
+      okuyucu.onerror = () => reject(new Error('Dosya okunamadı'));
+      okuyucu.readAsDataURL(dosya);
+    });
+  }
+
+  function saatlikKontrolEkraniniAc() {
+    saatlikOnLidVeri = null;
+    saatlikArkaLidVeri = null;
+    document.getElementById('saatlik-on-lid-onizleme').style.display = 'none';
+    document.getElementById('saatlik-arka-lid-onizleme').style.display = 'none';
+    document.getElementById('saatlik-hata').textContent = '';
+    document.getElementById('saatlik-sarj-bilgi').innerHTML = `
+      <div class="satir"><span>Hat</span><b>${seciliHat}</b></div>
+      <div class="satir"><span>Ürün</span><b>${acikSarj ? acikSarj.urunKodu : '-'}</b></div>
+      <div class="satir"><span>Parti No</span><b>${acikSarj ? acikSarj.partiNo : '-'}</b></div>
+    `;
+    ekranGoster('ekran-saatlik-kontrol');
+  }
+
+  document.getElementById('btn-geri-saatlik').addEventListener('click', () => hatSeç(seciliHat));
+
+  document.getElementById('btn-saatlik-on-lid-cek').addEventListener('click', () => document.getElementById('saatlik-on-lid-input').click());
+  document.getElementById('btn-saatlik-arka-lid-cek').addEventListener('click', () => document.getElementById('saatlik-arka-lid-input').click());
+
+  document.getElementById('saatlik-on-lid-input').addEventListener('change', async (e) => {
+    const dosya = e.target.files[0];
+    if (!dosya) return;
+    try {
+      saatlikOnLidVeri = await resizeVeBase64eCevir(dosya);
+      document.getElementById('saatlik-on-lid-img').src = saatlikOnLidVeri;
+      document.getElementById('saatlik-on-lid-onizleme').style.display = 'flex';
+    } catch (err) {
+      document.getElementById('saatlik-hata').textContent = 'Fotoğraf işlenemedi: ' + err.message;
+    }
+    e.target.value = '';
+  });
+
+  document.getElementById('saatlik-arka-lid-input').addEventListener('change', async (e) => {
+    const dosya = e.target.files[0];
+    if (!dosya) return;
+    try {
+      saatlikArkaLidVeri = await resizeVeBase64eCevir(dosya);
+      document.getElementById('saatlik-arka-lid-img').src = saatlikArkaLidVeri;
+      document.getElementById('saatlik-arka-lid-onizleme').style.display = 'flex';
+    } catch (err) {
+      document.getElementById('saatlik-hata').textContent = 'Fotoğraf işlenemedi: ' + err.message;
+    }
+    e.target.value = '';
+  });
+
+  document.getElementById('btn-saatlik-kaydet').addEventListener('click', async () => {
+    const hataKutusu = document.getElementById('saatlik-hata');
+    if (!saatlikOnLidVeri || !saatlikArkaLidVeri) {
+      hataKutusu.textContent = 'Hem ön hem arka lid fotoğrafını çekmelisin.';
+      return;
+    }
+    const buton = document.getElementById('btn-saatlik-kaydet');
+    buton.disabled = true;
+    hataKutusu.textContent = '';
+    try {
+      const sonuc = await apiPost({
+        islem: 'saatlikKontrolKaydet',
+        sarjId: acikSarj ? acikSarj.sarjId : '',
+        hat: seciliHat,
+        onLidBase64: saatlikOnLidVeri,
+        arkaLidBase64: saatlikArkaLidVeri,
+        kullanici: mevcutKullanici ? mevcutKullanici.ad : ''
+      });
+      if (sonuc.basarili) {
+        await hatSeç(seciliHat);
+      } else {
+        hataKutusu.textContent = sonuc.mesaj || 'Kayıt başarısız.';
+      }
+    } catch (err) {
+      hataKutusu.textContent = 'Bağlantı hatası: ' + err.message;
+    } finally {
+      buton.disabled = false;
+    }
+  });
+
+  // ================================================================
+  // ŞARJ KAPAMA
+  // ================================================================
+
+  function sarjKapamaEkraniniAc() {
+    document.getElementById('kapama-onay').checked = false;
+    document.getElementById('kapama-hata').textContent = '';
+    document.getElementById('kapama-sarj-bilgi').innerHTML = `
+      <div class="satir"><span>Hat</span><b>${seciliHat}</b></div>
+      <div class="satir"><span>Ürün</span><b>${acikSarj ? acikSarj.urunKodu : '-'}</b></div>
+      <div class="satir"><span>Parti No</span><b>${acikSarj ? acikSarj.partiNo : '-'}</b></div>
+      <div class="satir"><span>Başlatan</span><b>${acikSarj ? acikSarj.baslatan : '-'}</b></div>
+    `;
+    ekranGoster('ekran-sarj-kapama');
+  }
+
+  document.getElementById('btn-geri-kapama').addEventListener('click', () => hatSeç(seciliHat));
+
+  document.getElementById('btn-sarj-kapat-onayla').addEventListener('click', async () => {
+    const hataKutusu = document.getElementById('kapama-hata');
+    if (!document.getElementById('kapama-onay').checked) {
+      hataKutusu.textContent = 'Devam etmeden önce reject/refeed teyidini onaylamalısın.';
+      return;
+    }
+    const buton = document.getElementById('btn-sarj-kapat-onayla');
+    buton.disabled = true;
+    hataKutusu.textContent = '';
+    try {
+      const sonuc = await apiPost({
+        islem: 'sarjKapat',
+        sarjId: acikSarj ? acikSarj.sarjId : '',
+        kapatan: mevcutKullanici ? mevcutKullanici.ad : ''
+      });
+      if (sonuc.basarili) {
+        await hatSeç(seciliHat);
+      } else {
+        hataKutusu.textContent = sonuc.mesaj || 'Şarj kapatılamadı.';
+        buton.disabled = false;
+      }
+    } catch (err) {
+      hataKutusu.textContent = 'Bağlantı hatası: ' + err.message;
+      buton.disabled = false;
+    }
+  });
 
   // ================================================================
   // ŞARJ BAŞLATMA SİHİRBAZI
@@ -893,27 +1145,65 @@
     return hints;
   }
 
-  async function karekodTaramayaBasla() {
-    document.getElementById('karekod-hata').textContent = '';
-    document.getElementById('karekod-video-alani').style.display = 'block';
-    try {
-      zxingOkuyucu = new ZXing.BrowserMultiFormatReader(karekodHints());
+  let fenerAcik = false;
 
+  async function _kamerayiBaslat() {
+    // Yüksek çözünürlük + arka kamera iste — küçük/uzaktaki kodun daha
+    // fazla piksele düşmesi tanımayı ciddi ölçüde iyileştirir. Bazı
+    // tarayıcılar decodeFromConstraints'i desteklemiyor olabilir; o
+    // durumda eski (daha düşük çözünürlüklü) yönteme geri dön.
+    const kisitlamalar = {
+      video: {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
+        advanced: [{ focusMode: 'continuous' }]
+      }
+    };
+    const geriCagirma = (sonuc) => {
+      if (!sonuc) return;
+      const metin = sonuc.text || (sonuc.getText && sonuc.getText());
+      const cozulen = karekodMetniCoz(metin);
+      if (cozulen) {
+        lidVeriIsle(cozulen);
+        karekodTaramayiDurdur();
+      } else {
+        document.getElementById('karekod-hata').textContent = `Okunan kod beklenen formatta değil: "${metin}"`;
+      }
+    };
+
+    if (typeof zxingOkuyucu.decodeFromConstraints === 'function') {
+      await zxingOkuyucu.decodeFromConstraints(kisitlamalar, 'karekod-video', geriCagirma);
+    } else {
       const cihazlar = await zxingOkuyucu.listVideoInputDevices();
       const arkaKamera = cihazlar.find(c => /back|arka|rear|environment/i.test(c.label));
       const seciliCihazId = arkaKamera ? arkaKamera.deviceId : (cihazlar[cihazlar.length - 1] || {}).deviceId;
+      await zxingOkuyucu.decodeFromVideoDevice(seciliCihazId, 'karekod-video', geriCagirma);
+    }
+  }
 
-      zxingOkuyucu.decodeFromVideoDevice(seciliCihazId, 'karekod-video', (sonuc) => {
-        if (!sonuc) return;
-        const metin = sonuc.text || (sonuc.getText && sonuc.getText());
-        const cozulen = karekodMetniCoz(metin);
-        if (cozulen) {
-          lidVeriIsle(cozulen);
-          karekodTaramayiDurdur();
-        } else {
-          document.getElementById('karekod-hata').textContent = `Okunan kod beklenen formatta değil: "${metin}"`;
-        }
-      });
+  function _aktifKameraTracki() {
+    const video = document.getElementById('karekod-video');
+    const stream = video && video.srcObject;
+    return stream ? stream.getVideoTracks()[0] : null;
+  }
+
+  async function karekodTaramayaBasla() {
+    document.getElementById('karekod-hata').textContent = '';
+    document.getElementById('karekod-video-alani').style.display = 'block';
+    document.getElementById('btn-tarama-fener').style.display = 'none';
+    fenerAcik = false;
+    try {
+      zxingOkuyucu = new ZXing.BrowserMultiFormatReader(karekodHints());
+      await _kamerayiBaslat();
+
+      // Fener (torch) destekleniyorsa butonu göster — çoğu Android Chrome'da
+      // çalışır, iOS Safari'de genelde desteklenmez.
+      const track = _aktifKameraTracki();
+      const yetenekler = track && track.getCapabilities ? track.getCapabilities() : {};
+      if (yetenekler && yetenekler.torch) {
+        document.getElementById('btn-tarama-fener').style.display = 'block';
+      }
     } catch (err) {
       document.getElementById('karekod-hata').textContent = 'Kamera açılamadı: ' + err.message + ' (Bu linki WhatsApp/Instagram gibi bir uygulama içinden değil, doğrudan Safari/Chrome\'da açtığından emin ol.)';
     }
@@ -923,12 +1213,33 @@
     if (zxingOkuyucu) {
       zxingOkuyucu.reset();
     }
+    fenerAcik = false;
     const videoAlani = document.getElementById('karekod-video-alani');
     if (videoAlani) videoAlani.style.display = 'none';
   }
 
   document.getElementById('btn-tarama-baslat').addEventListener('click', karekodTaramayaBasla);
   document.getElementById('btn-tarama-durdur').addEventListener('click', karekodTaramayiDurdur);
+
+  // Kamerayı kapatıp hemen yeniden açmak, takılı kalmış odağı sıfırlamanın
+  // basit ama tarayıcılar arası en güvenilir yolu.
+  document.getElementById('btn-tarama-yenidenodakla').addEventListener('click', async () => {
+    if (zxingOkuyucu) zxingOkuyucu.reset();
+    document.getElementById('karekod-hata').textContent = '';
+    await karekodTaramayaBasla();
+  });
+
+  document.getElementById('btn-tarama-fener').addEventListener('click', async () => {
+    const track = _aktifKameraTracki();
+    if (!track) return;
+    try {
+      fenerAcik = !fenerAcik;
+      await track.applyConstraints({ advanced: [{ torch: fenerAcik }] });
+      document.getElementById('btn-tarama-fener').textContent = fenerAcik ? 'Fener Kapat' : 'Fener Aç';
+    } catch (err) {
+      document.getElementById('karekod-hata').textContent = 'Fener açılamadı: ' + err.message;
+    }
+  });
 
   // -- Galeriden fotoğraf seçip okuma --
   document.getElementById('btn-galeriden-sec').addEventListener('click', () => {
