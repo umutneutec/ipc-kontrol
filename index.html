@@ -605,9 +605,13 @@
     return kategori === 'EU_DISI' ? 'EU Dışı' : (kategori === 'EU' ? 'EU' : '-');
   }
 
-  const SIHIRBAZ_ADIMLARI = {
-    'ekran-sb-kategori': 1, 'ekran-sb-itd': 2, 'ekran-sb-spool': 3, 'ekran-sb-urun': 4,
-    'ekran-sb-testler': 5, 'ekran-sb-lid': 6, 'ekran-sb-numune': 7, 'ekran-sb-ozet': 8
+  // Sihirbazın adım DİZİSİ kategoriye göre değişir — EU Dışı'nda İTD Onayı
+  // adımı hiç yok (KKL onayı EU-dışı protokolünde aranmıyor). Kategori henüz
+  // seçilmemişken (ekran-sb-kategori'nin kendisi) varsayılan olarak EU dizisi
+  // kullanılır — sadece ilerleme çubuğu/etiketi için, gerçek akışı etkilemez.
+  const WIZARD_ADIMLARI = {
+    EU: ['ekran-sb-kategori', 'ekran-sb-itd', 'ekran-sb-spool', 'ekran-sb-urun', 'ekran-sb-testler', 'ekran-sb-lid', 'ekran-sb-numune', 'ekran-sb-ozet'],
+    EU_DISI: ['ekran-sb-kategori', 'ekran-sb-spool', 'ekran-sb-urun', 'ekran-sb-testler', 'ekran-sb-lid', 'ekran-sb-numune', 'ekran-sb-ozet']
   };
 
   function ekranGoster(id) {
@@ -620,10 +624,13 @@
     document.body.scrollTop = 0;
 
     const ilerlemeYolu = document.getElementById('sihirbaz-ilerleme-yolu');
-    const adim = SIHIRBAZ_ADIMLARI[id];
-    if (adim) {
+    const dizi = WIZARD_ADIMLARI[sihirbaz.kategori] || WIZARD_ADIMLARI.EU;
+    const adimIndex = dizi.indexOf(id);
+    if (adimIndex !== -1) {
       ilerlemeYolu.style.display = 'block';
-      document.getElementById('sihirbaz-ilerleme-dolu').style.width = (adim / 8 * 100) + '%';
+      document.getElementById('sihirbaz-ilerleme-dolu').style.width = ((adimIndex + 1) / dizi.length * 100) + '%';
+      const etiketEl = document.querySelector('#' + id + ' .adim-etiketi');
+      if (etiketEl) etiketEl.textContent = `Şarj Başlatma — Adım ${adimIndex + 1} / ${dizi.length}`;
     } else {
       ilerlemeYolu.style.display = 'none';
     }
@@ -1149,27 +1156,39 @@
 
   document.getElementById('btn-geri-kategori').addEventListener('click', () => hatSeç(seciliHat));
 
+  // İTD Onayı EU-dışı protokolünde aranmıyor — o kategoride bu adım hiç
+  // gösterilmeden doğrudan Spool/Sipariş Eşleşme'ye geçilir.
+  function spoolEkraniniHazirlaVeGoster() {
+    document.getElementById('spool-onay').checked = false;
+    document.getElementById('spool-hata').textContent = '';
+    ekranGoster('ekran-sb-spool');
+  }
+
   function kategoriSec(kategori) {
     sihirbaz.kategori = kategori;
-    document.getElementById('itd-hata').textContent = '';
-    ekranGoster('ekran-sb-itd');
+    if (kategori === 'EU_DISI') {
+      spoolEkraniniHazirlaVeGoster();
+    } else {
+      document.getElementById('itd-hata').textContent = '';
+      ekranGoster('ekran-sb-itd');
+    }
   }
   document.getElementById('kategori-eu').addEventListener('click', () => kategoriSec('EU'));
   document.getElementById('kategori-eu-disi').addEventListener('click', () => kategoriSec('EU_DISI'));
 
   document.getElementById('btn-geri-itd').addEventListener('click', () => ekranGoster('ekran-sb-kategori'));
 
-  // -- Adım 1: İTD Onayı --
-  document.getElementById('itd-evet').addEventListener('click', () => {
-    document.getElementById('spool-onay').checked = false;
-    document.getElementById('spool-hata').textContent = '';
-    ekranGoster('ekran-sb-spool');
-  });
+  // -- Adım 1: İTD Onayı (sadece EU) --
+  document.getElementById('itd-evet').addEventListener('click', spoolEkraniniHazirlaVeGoster);
   document.getElementById('itd-hayir').addEventListener('click', () => {
     document.getElementById('itd-hata').textContent = 'İTD onayı olmadan şarj başlatılamaz. KKL onayını bekleyin.';
   });
 
-  document.getElementById('btn-geri-spool').addEventListener('click', () => ekranGoster('ekran-sb-itd'));
+  // Geri: EU'da bir önceki adım İTD Onayı, EU Dışı'nda İTD adımı hiç
+  // olmadığı için doğrudan Ürün Kategorisi'ne dönülür.
+  document.getElementById('btn-geri-spool').addEventListener('click', () => {
+    ekranGoster(sihirbaz.kategori === 'EU_DISI' ? 'ekran-sb-kategori' : 'ekran-sb-itd');
+  });
 
   // -- Adım 2: Spool/Sipariş Eşleşme --
   document.getElementById('btn-spool-devam').addEventListener('click', async () => {
