@@ -1982,6 +1982,12 @@
       });
       if (sonuc.basarili) {
         await hatSeç(seciliHat); // açık şarj kartını göstererek doğrula
+        // Şarj başladı ama ilk ürün lid fotoğrafları Drive'a kaydedilemediyse
+        // bunu sessizce geçmeyelim — daha önce tam da bu sessizlik yüzünden
+        // Sheet'te K/L sütunları boş kalmıştı, sebebi görünmüyordu.
+        if (sonuc.fotografUyarisi) {
+          alert('Şarj başlatıldı, ancak bir uyarı var:\n\n' + sonuc.fotografUyarisi + '\n\nBu genelde Apps Script tarafında yeni bir Drive yazma izni onayı gerektiğinde olur — Apps Script editöründen testDriveYaziIzni() fonksiyonunu çalıştırıp izni onayla, sonra yeni sürüm olarak yeniden dağıt.');
+        }
       } else {
         hataKutusu.textContent = sonuc.mesaj || 'Şarj başlatılamadı.';
         buton.disabled = false;
