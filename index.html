@@ -426,6 +426,7 @@
           <button class="ikincil kucuk" id="btn-tarama-yenidenodakla">Yeniden Odakla</button>
           <button class="ikincil kucuk" id="btn-tarama-fener" style="display:none;">Fener Aç</button>
         </div>
+        <button id="btn-kareyi-analiz-et">Zor Okunuyorsa: Kareyi Analiz Et</button>
         <button class="ikincil kucuk" id="btn-tarama-durdur">Taramayı Durdur</button>
       </div>
     </div>
@@ -445,6 +446,7 @@
       <div class="hata" id="manuel-hata"></div>
     </div>
 
+    <div class="aciklama" id="karekod-durum" style="margin-top:6px;"></div>
     <div class="hata" id="karekod-hata"></div>
     <div id="karekod-sonuc"></div>
     <div class="uyari-kutusu kritik" id="parti-uyumsuzluk" style="display:none;"></div>
@@ -1145,6 +1147,88 @@
     return hints;
   }
 
+  /**
+   * Bir canvas'ın piksellerinden doğrudan Data Matrix okumayı dener
+   * (ZXing'in düşük seviyeli API'siyle — ara bir <img>/data URL adımı
+   * olmadan, bu yüzden çok sayıda deneme yapılacaksa çok daha hızlı).
+   * Bulamazsa null döner (hata fırlatmaz).
+   */
+  function _canvastanKarekodDene(canvas) {
+    try {
+      const ctx = canvas.getContext('2d');
+      const { width, height, data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const parlaklik = new Uint8ClampedArray(width * height);
+      for (let i = 0; i < width * height; i++) {
+        const r = data[i * 4], g = data[i * 4 + 1], b = data[i * 4 + 2];
+        parlaklik[i] = (0.299 * r + 0.587 * g + 0.114 * b) | 0;
+      }
+      const kaynak = new ZXing.RGBLuminanceSource(parlaklik, width, height);
+      const bitmap = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(kaynak));
+      const okuyucu = new ZXing.MultiFormatReader();
+      okuyucu.setHints(karekodHints());
+      return okuyucu.decode(bitmap).getText();
+    } catch (err) {
+      return null;
+    }
+  }
+
+  /**
+   * Bir fotoğrafın TAMAMINDA karekod bulunamadığında kullanılan "derin arama":
+   * kod, geniş/karışık bir fotoğrafın küçük bir bölümünü kapladığında tek
+   * seferlik tam-görsel taraması genelde başarısız oluyor (test ettik).
+   * Bu fonksiyon önce görselin birkaç farklı küçültülmüş halini, sonra da
+   * görseli kaydırmalı kare bölgelere ayırıp her birini (gerekirse
+   * büyüterek) tek tek dener — kodu otomatik "bulup kırpmış" gibi davranır.
+   * kaynak: naturalWidth/Height ya da width/height'ı olan çizilebilir
+   * herhangi bir eleman (img, video, canvas).
+   */
+  async function derinlemesineKarekodAra(kaynak, ilerlemeCB) {
+    const G = kaynak.naturalWidth || kaynak.videoWidth || kaynak.width;
+    const Y = kaynak.naturalHeight || kaynak.videoHeight || kaynak.height;
+    if (!G || !Y) return null;
+
+    const denemeler = [];
+
+    // 1) Kırpmadan, sadece birkaç farklı küçültme oranıyla tüm görsel.
+    [1600, 1000, 700, 450, G].forEach(hedefG => {
+      if (hedefG > G) return;
+      const oran = hedefG / G;
+      denemeler.push({ x: 0, y: 0, w: G, h: Y, cg: Math.round(G * oran), cy: Math.round(Y * oran) });
+    });
+
+    // 2) Görseli kaydırmalı kare bölgelere ayır (kod, görselin küçük bir
+    // kısmını kaplıyorsa bu adım onu "bulur"). Önce doğal boyutta, hâlâ
+    // bulunamazsa aynı bölgeleri büyüterek tekrar dener.
+    const kucukKenar = Math.min(G, Y);
+    const kutu = Math.round(kucukKenar * 0.42);
+    const adim = Math.max(1, Math.round(kucukKenar * 0.28));
+    const bolgeler = [];
+    for (let y = 0; y + kutu <= Y; y += adim) {
+      for (let x = 0; x + kutu <= G; x += adim) {
+        bolgeler.push({ x, y, w: kutu, h: kutu });
+      }
+    }
+    bolgeler.forEach(b => denemeler.push({ ...b, cg: b.w, cy: b.h }));
+    bolgeler.forEach(b => denemeler.push({ ...b, cg: Math.round(b.w * 2.2), cy: Math.round(b.h * 2.2) }));
+
+    for (let i = 0; i < denemeler.length; i++) {
+      const d = denemeler[i];
+      if (ilerlemeCB) ilerlemeCB(i + 1, denemeler.length);
+      const canvas = document.createElement('canvas');
+      canvas.width = d.cg;
+      canvas.height = d.cy;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(kaynak, d.x, d.y, d.w, d.h, 0, 0, d.cg, d.cy);
+      const metin = _canvastanKarekodDene(canvas);
+      if (metin) {
+        const cozulen = karekodMetniCoz(metin);
+        if (cozulen) return cozulen;
+      }
+      if (i % 5 === 0) await new Promise(r => setTimeout(r, 0)); // arayüz donmasın
+    }
+    return null;
+  }
+
   let fenerAcik = false;
 
   async function _kamerayiBaslat() {
@@ -1229,6 +1313,33 @@
     await karekodTaramayaBasla();
   });
 
+  document.getElementById('btn-kareyi-analiz-et').addEventListener('click', async () => {
+    const video = document.getElementById('karekod-video');
+    const hataKutusu = document.getElementById('karekod-hata');
+    const durumKutusu = document.getElementById('karekod-durum');
+    if (!video.videoWidth) {
+      hataKutusu.textContent = 'Kamera görüntüsü henüz hazır değil, bir saniye bekleyip tekrar dene.';
+      return;
+    }
+    const buton = document.getElementById('btn-kareyi-analiz-et');
+    buton.disabled = true;
+    hataKutusu.textContent = '';
+    try {
+      const cozulen = await derinlemesineKarekodAra(video, (i, toplam) => {
+        durumKutusu.textContent = `Kare analiz ediliyor… (${i}/${toplam}) — telefonu sabit tut`;
+      });
+      durumKutusu.textContent = '';
+      if (cozulen) {
+        lidVeriIsle(cozulen);
+        karekodTaramayiDurdur();
+      } else {
+        hataKutusu.textContent = 'Bu karede kod bulunamadı. Kodu hedef çerçevenin ortasına getirip tekrar dene, ya da "Galeriden Yükle" ile net bir fotoğraf çekip seçmeyi dene.';
+      }
+    } finally {
+      buton.disabled = false;
+    }
+  });
+
   document.getElementById('btn-tarama-fener').addEventListener('click', async () => {
     const track = _aktifKameraTracki();
     if (!track) return;
@@ -1249,8 +1360,10 @@
   document.getElementById('karekod-galeri-input').addEventListener('change', async (e) => {
     const dosya = e.target.files[0];
     const hataKutusu = document.getElementById('karekod-hata');
+    const durumKutusu = document.getElementById('karekod-durum');
     if (!dosya) return;
-    hataKutusu.textContent = 'Okunuyor…';
+    hataKutusu.textContent = '';
+    durumKutusu.textContent = 'Okunuyor…';
 
     try {
       const dataUrl = await new Promise((resolve, reject) => {
@@ -1265,18 +1378,37 @@
         img.onerror = () => reject(new Error('Görsel yüklenemedi'));
         img.src = dataUrl;
       });
-      const galeriOkuyucu = new ZXing.BrowserMultiFormatReader(karekodHints());
-      const sonuc = await galeriOkuyucu.decodeFromImageElement(img);
-      const metin = sonuc.text || (sonuc.getText && sonuc.getText());
-      const cozulen = karekodMetniCoz(metin);
+
+      // Önce hızlı yol: görselin tamamını olduğu gibi okumayı dene.
+      let cozulen = null;
+      try {
+        const galeriOkuyucu = new ZXing.BrowserMultiFormatReader(karekodHints());
+        const sonuc = await galeriOkuyucu.decodeFromImageElement(img);
+        const metin = sonuc.text || (sonuc.getText && sonuc.getText());
+        cozulen = karekodMetniCoz(metin);
+      } catch (ilkDenemeHatasi) {
+        cozulen = null;
+      }
+
+      // Bulunamadıysa: kod muhtemelen geniş/karışık fotoğrafın küçük bir
+      // bölümünü kaplıyor — görseli otomatik olarak kırpıp/büyüterek
+      // tarayan derin aramaya geç.
+      if (!cozulen) {
+        cozulen = await derinlemesineKarekodAra(img, (i, toplam) => {
+          durumKutusu.textContent = `Görsel taranıyor… (${i}/${toplam})`;
+        });
+      }
+
       if (cozulen) {
         lidVeriIsle(cozulen);
-        hataKutusu.textContent = '';
+        durumKutusu.textContent = '';
       } else {
-        hataKutusu.textContent = `Okunan kod beklenen formatta değil: "${metin}"`;
+        durumKutusu.textContent = '';
+        hataKutusu.textContent = 'Görselden kod okunamadı. Kodu daha çok kaplayan (etrafında daha az fazladan alan olan), net ve iyi ışıklı bir fotoğrafla tekrar dene.';
       }
     } catch (err) {
-      hataKutusu.textContent = 'Görselden kod okunamadı — daha net/yakından bir fotoğrafla tekrar dene.';
+      durumKutusu.textContent = '';
+      hataKutusu.textContent = 'Görsel işlenemedi: ' + err.message;
     } finally {
       e.target.value = '';
     }
