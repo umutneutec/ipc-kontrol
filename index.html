@@ -167,6 +167,25 @@
   .gorsel-kutu span { display: block; font-size: 11px; color: var(--gri); margin-top: 4px; }
   .arama-sonuc-listesi { max-height: 320px; overflow-y: auto; }
 
+  .yonetici-satir {
+    background: var(--beyaz);
+    border: 1px solid #E4E4E6;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .yonetici-satir-ust { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .yonetici-satir-ust b { font-size: 15px; }
+  .durum-rozet { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
+  .durum-rozet.acik { background: #FCE8E6; color: var(--kirmizi); }
+  .durum-rozet.kapali { background: #ECECEE; color: var(--gri); }
+  .yonetici-satir-alt { font-size: 13px; color: var(--gri); display: flex; flex-wrap: wrap; gap: 4px 10px; }
+  .saatlik-kayit-karti { background: var(--beyaz); border: 1px solid #E4E4E6; border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .saatlik-kayit-ust { display: flex; justify-content: space-between; font-size: 13px; color: var(--gri); margin-bottom: 8px; }
+  .saatlik-kayit-ust b { color: var(--gri-koyu); }
+
   .karekod-video-sarmalayici { position: relative; }
   .karekod-hedef {
     position: absolute;
@@ -475,6 +494,38 @@
     <button class="ikincil geri" id="btn-geri-ozet">Geri</button>
   </section>
 
+  <!-- YÖNETİCİ PANELİ -->
+  <section id="ekran-yonetici-panel" class="ekran">
+    <h2>Yönetici Paneli</h2>
+    <p class="aciklama" id="yonetici-kullanici-etiketi"></p>
+
+    <div class="sekme-satiri">
+      <div class="secenek sekme secili" id="yonetici-sekme-canli">Canlı Durum</div>
+      <div class="secenek sekme" id="yonetici-sekme-gecmis">Geçmiş Ara</div>
+    </div>
+
+    <div id="yonetici-panel-canli">
+      <div id="yonetici-canli-liste" class="yukleniyor">Yükleniyor…</div>
+    </div>
+
+    <div id="yonetici-panel-gecmis" style="display:none;">
+      <label for="yonetici-arama">Ara</label>
+      <input type="text" id="yonetici-arama" placeholder="Hat, ürün, parti no veya personel adı…" autocomplete="off" />
+      <div id="yonetici-gecmis-liste" class="yukleniyor" style="margin-top:14px;">Yükleniyor…</div>
+    </div>
+
+    <button class="ikincil" id="btn-yonetici-cikis">Çıkış Yap</button>
+  </section>
+
+  <!-- YÖNETİCİ — ŞARJ DETAYI -->
+  <section id="ekran-yonetici-detay" class="ekran">
+    <h2>Şarj Detayı</h2>
+    <div class="kart" id="yonetici-detay-kart"></div>
+    <h2 style="margin-top:24px; font-size:15px;">Saatlik Kontrol Kayıtları</h2>
+    <div id="yonetici-saatlik-liste" class="yukleniyor">Yükleniyor…</div>
+    <button class="ikincil geri" id="btn-geri-yonetici-detay">Panele Dön</button>
+  </section>
+
 </main>
 
 <!-- Karekod (Data Matrix) okuma kütüphanesi -->
@@ -586,7 +637,11 @@
       const sonuc = await apiPost({ islem: 'girisYap', ad, pin });
       if (sonuc.basarili) {
         mevcutKullanici = { ad: sonuc.ad, rol: sonuc.rol };
-        sahalariYukleVeGoster();
+        if (kullaniciYoneticiMi()) {
+          yoneticiPaneliniAc();
+        } else {
+          sahalariYukleVeGoster();
+        }
       } else {
         hataKutusu.textContent = sonuc.mesaj || 'Giriş başarısız.';
       }
@@ -630,6 +685,178 @@
     document.getElementById('giris-pin').value = '';
     ekranGoster('ekran-giris');
   });
+
+  // ================================================================
+  // YÖNETİCİ PANELİ
+  // ================================================================
+
+  function kullaniciYoneticiMi() {
+    const rol = (mevcutKullanici && mevcutKullanici.rol || '').toString().trim().toLowerCase();
+    return rol.includes('yönet') || rol.includes('yonet');
+  }
+
+  let tumSarjlarOnbellek = [];
+
+  function turkTarihiCoz(str) {
+    const m = String(str || '').match(/^(\d{2})\.(\d{2})\.(\d{4})\s+(\d{2}):(\d{2})$/);
+    if (!m) return null;
+    const [, gun, ay, yil, saat, dakika] = m;
+    return new Date(Number(yil), Number(ay) - 1, Number(gun), Number(saat), Number(dakika));
+  }
+
+  function sureMetni(baslangicStr) {
+    const bas = turkTarihiCoz(baslangicStr);
+    if (!bas) return '-';
+    const farkDk = Math.max(0, Math.floor((Date.now() - bas.getTime()) / 60000));
+    if (farkDk < 60) return farkDk + ' dk';
+    return `${Math.floor(farkDk / 60)} sa ${farkDk % 60} dk`;
+  }
+
+  async function yoneticiPaneliniAc() {
+    document.getElementById('yonetici-kullanici-etiketi').textContent =
+      `${mevcutKullanici.ad} olarak giriş yaptın (${mevcutKullanici.rol}).`;
+    yoneticiSekmeSec('canli');
+    ekranGoster('ekran-yonetici-panel');
+    await yoneticiVerileriYenile();
+  }
+
+  function yoneticiSekmeSec(sekme) {
+    document.getElementById('yonetici-sekme-canli').classList.toggle('secili', sekme === 'canli');
+    document.getElementById('yonetici-sekme-gecmis').classList.toggle('secili', sekme === 'gecmis');
+    document.getElementById('yonetici-panel-canli').style.display = sekme === 'canli' ? 'block' : 'none';
+    document.getElementById('yonetici-panel-gecmis').style.display = sekme === 'gecmis' ? 'block' : 'none';
+  }
+  document.getElementById('yonetici-sekme-canli').addEventListener('click', () => yoneticiSekmeSec('canli'));
+  document.getElementById('yonetici-sekme-gecmis').addEventListener('click', () => yoneticiSekmeSec('gecmis'));
+
+  async function yoneticiVerileriYenile() {
+    const canliListe = document.getElementById('yonetici-canli-liste');
+    const gecmisListe = document.getElementById('yonetici-gecmis-liste');
+    canliListe.className = 'yukleniyor';
+    canliListe.textContent = 'Yükleniyor…';
+    try {
+      const sonuc = await apiGet('tumSarjlariGetir', {});
+      if (!sonuc.basarili) throw new Error(sonuc.hata || 'Veri alınamadı.');
+      tumSarjlarOnbellek = sonuc.veri;
+      yoneticiCanliListesiniCiz();
+      yoneticiGecmisListesiniCiz('');
+    } catch (err) {
+      canliListe.className = 'hata';
+      canliListe.textContent = 'Bağlantı hatası: ' + err.message;
+      gecmisListe.className = 'hata';
+      gecmisListe.textContent = 'Bağlantı hatası: ' + err.message;
+    }
+  }
+
+  function yoneticiCanliListesiniCiz() {
+    const liste = document.getElementById('yonetici-canli-liste');
+    const acikOlanlar = tumSarjlarOnbellek.filter(s => String(s.durum) === 'Acik');
+    if (!acikOlanlar.length) {
+      liste.className = '';
+      liste.innerHTML = '<p class="aciklama">Şu anda açık şarj yok.</p>';
+      return;
+    }
+    liste.className = '';
+    liste.innerHTML = acikOlanlar.map(s => `
+      <div class="yonetici-satir" data-sarj-id="${s.sarjId}">
+        <div class="yonetici-satir-ust"><b>${s.hat}</b><span class="durum-rozet acik">AÇIK · ${sureMetni(s.baslangic)}</span></div>
+        <div class="yonetici-satir-alt">
+          <span>${s.urunKodu}</span><span>·</span><span>Parti ${s.partiNo}</span><span>·</span><span>${s.baslatan || '-'}</span>
+        </div>
+      </div>
+    `).join('');
+    liste.querySelectorAll('.yonetici-satir').forEach(el => {
+      el.addEventListener('click', () => yoneticiDetayGoster(el.dataset.sarjId));
+    });
+  }
+
+  function yoneticiGecmisListesiniCiz(aramaMetni) {
+    const liste = document.getElementById('yonetici-gecmis-liste');
+    const aranan = aramaMetni.trim().toLowerCase();
+    const siraliListe = [...tumSarjlarOnbellek].sort((a, b) => {
+      const ta = turkTarihiCoz(a.baslangic), tb = turkTarihiCoz(b.baslangic);
+      return (tb ? tb.getTime() : 0) - (ta ? ta.getTime() : 0);
+    });
+    const eslesenler = aranan
+      ? siraliListe.filter(s => [s.hat, s.urunKodu, s.partiNo, s.baslatan].join(' ').toLowerCase().includes(aranan))
+      : siraliListe;
+
+    if (!eslesenler.length) {
+      liste.className = '';
+      liste.innerHTML = '<p class="aciklama">Eşleşen kayıt yok.</p>';
+      return;
+    }
+    liste.className = '';
+    liste.innerHTML = eslesenler.map(s => `
+      <div class="yonetici-satir" data-sarj-id="${s.sarjId}">
+        <div class="yonetici-satir-ust">
+          <b>${s.hat}</b>
+          <span class="durum-rozet ${s.durum === 'Acik' ? 'acik' : 'kapali'}">${s.durum === 'Acik' ? 'AÇIK' : 'KAPALI'}</span>
+        </div>
+        <div class="yonetici-satir-alt">
+          <span>${s.urunKodu}</span><span>·</span><span>Parti ${s.partiNo}</span><span>·</span><span>${s.baslatan || '-'}</span><span>·</span><span>${s.baslangic || '-'}</span>
+        </div>
+      </div>
+    `).join('');
+    liste.querySelectorAll('.yonetici-satir').forEach(el => {
+      el.addEventListener('click', () => yoneticiDetayGoster(el.dataset.sarjId));
+    });
+  }
+
+  document.getElementById('yonetici-arama').addEventListener('input', (e) => yoneticiGecmisListesiniCiz(e.target.value));
+
+  document.getElementById('btn-yonetici-cikis').addEventListener('click', () => {
+    mevcutKullanici = null;
+    document.getElementById('giris-ad').value = '';
+    document.getElementById('giris-pin').value = '';
+    ekranGoster('ekran-giris');
+  });
+
+  async function yoneticiDetayGoster(sarjId) {
+    const s = tumSarjlarOnbellek.find(x => String(x.sarjId) === String(sarjId));
+    if (!s) return;
+    document.getElementById('yonetici-detay-kart').innerHTML = `
+      <div class="satir"><span>Hat</span><b>${s.hat}</b></div>
+      <div class="satir"><span>Ürün</span><b>${s.urunKodu}</b></div>
+      <div class="satir"><span>Parti No</span><b>${s.partiNo}</b></div>
+      <div class="satir"><span>Üretim Tarihi</span><b>${s.uretimTarihi || '-'}</b></div>
+      <div class="satir"><span>SKT</span><b>${s.skt || '-'}</b></div>
+      <div class="satir"><span>Durum</span><b>${s.durum === 'Acik' ? 'Açık' : 'Kapalı'}</b></div>
+      <div class="satir"><span>Başlatan</span><b>${s.baslatan || '-'}</b></div>
+      <div class="satir"><span>Başlangıç</span><b>${s.baslangic || '-'}</b></div>
+      <div class="satir"><span>Bitiş</span><b>${s.bitis || '-'}</b></div>
+    `;
+    ekranGoster('ekran-yonetici-detay');
+
+    const saatlikListe = document.getElementById('yonetici-saatlik-liste');
+    saatlikListe.className = 'yukleniyor';
+    saatlikListe.textContent = 'Yükleniyor…';
+    try {
+      const sonuc = await apiGet('sarjSaatlikKontrolleriGetir', { sarjId });
+      if (!sonuc.basarili) throw new Error(sonuc.hata || 'Kayıtlar alınamadı.');
+      const kayitlar = sonuc.veri;
+      if (!kayitlar.length) {
+        saatlikListe.className = '';
+        saatlikListe.innerHTML = '<p class="aciklama">Bu şarj için henüz saatlik kontrol kaydı yok.</p>';
+        return;
+      }
+      saatlikListe.className = '';
+      saatlikListe.innerHTML = kayitlar.map(k => `
+        <div class="saatlik-kayit-karti">
+          <div class="saatlik-kayit-ust"><b>${k.zaman}</b><span>${k.kullanici || '-'}</span></div>
+          <div class="gorsel-satiri">
+            <div class="gorsel-kutu">${k.onLid ? `<img src="${k.onLid}" />` : '<div class="kart">Yok</div>'}<span>Ön Lid</span></div>
+            <div class="gorsel-kutu">${k.arkaLid ? `<img src="${k.arkaLid}" />` : '<div class="kart">Yok</div>'}<span>Arka Lid</span></div>
+          </div>
+        </div>
+      `).join('');
+    } catch (err) {
+      saatlikListe.className = 'hata';
+      saatlikListe.textContent = 'Bağlantı hatası: ' + err.message;
+    }
+  }
+
+  document.getElementById('btn-geri-yonetici-detay').addEventListener('click', () => ekranGoster('ekran-yonetici-panel'));
 
   // ---- 3) Makine seçimi ----
   function makineleriGoster(saha) {
