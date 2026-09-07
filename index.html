@@ -364,9 +364,21 @@
     <button class="ikincil geri" id="btn-geri-kapama">Şarj Durumuna Dön</button>
   </section>
 
+  <!-- 5.0) ŞARJ BAŞLATMA SİHİRBAZI — Adım 0: Ürün Kategorisi -->
+  <section id="ekran-sb-kategori" class="ekran">
+    <div class="adim-etiketi">Şarj Başlatma — Adım 1 / 8</div>
+    <h2>Ürün Kategorisi</h2>
+    <p class="aciklama">Bu parti EU ürünü mü, EU dışı mı? Sonraki adımlar (ürün listesi, numune planı, testler) buna göre değişir.</p>
+    <div class="secenek-listesi">
+      <div class="secenek" id="kategori-eu">EU</div>
+      <div class="secenek" id="kategori-eu-disi">EU Dışı</div>
+    </div>
+    <button class="ikincil geri" id="btn-geri-kategori">Şarj Durumuna Dön</button>
+  </section>
+
   <!-- 5) ŞARJ BAŞLATMA SİHİRBAZI — Adım 1: İTD Onayı -->
   <section id="ekran-sb-itd" class="ekran">
-    <div class="adim-etiketi">Şarj Başlatma — Adım 1 / 7</div>
+    <div class="adim-etiketi">Şarj Başlatma — Adım 2 / 8</div>
     <h2>İTD Onayı</h2>
     <p class="aciklama">KKL tarafından İTD (uygunluk) onayı verildi mi? Onay yoksa şarj başlatılamaz.</p>
     <div class="secenek-listesi">
@@ -374,12 +386,12 @@
       <div class="secenek" id="itd-hayir">Hayır</div>
     </div>
     <div class="hata" id="itd-hata"></div>
-    <button class="ikincil geri" id="btn-geri-itd">Şarj Durumuna Dön</button>
+    <button class="ikincil geri" id="btn-geri-itd">Geri</button>
   </section>
 
   <!-- 6) Adım 2: Spool/Sipariş Eşleşme -->
   <section id="ekran-sb-spool" class="ekran">
-    <div class="adim-etiketi">Şarj Başlatma — Adım 2 / 7</div>
+    <div class="adim-etiketi">Şarj Başlatma — Adım 3 / 8</div>
     <h2>Spool Etiket / Sipariş Eşleşme</h2>
     <p class="aciklama">Spool etiket bilgisi, ambalaj proses siparişiyle eşleşiyor mu? (Görsel olarak kontrol et.)</p>
     <div class="onay-kutusu">
@@ -393,7 +405,7 @@
 
   <!-- 7) Adım 3: Ürün Seçimi + Parti No -->
   <section id="ekran-sb-urun" class="ekran">
-    <div class="adim-etiketi">Şarj Başlatma — Adım 3 / 7</div>
+    <div class="adim-etiketi">Şarj Başlatma — Adım 4 / 8</div>
     <h2>Ürün Bilgisi Doğrulama</h2>
     <p class="aciklama">Sortimat panelinde operatörün girdiği ürün bilgisini seç ve parti no'yu doğrula.</p>
     <label for="urun-arama">Ürün Ara</label>
@@ -410,7 +422,7 @@
 
   <!-- 8) Adım 4: Makine Challenge Testleri -->
   <section id="ekran-sb-testler" class="ekran">
-    <div class="adim-etiketi">Şarj Başlatma — Adım 4 / 7</div>
+    <div class="adim-etiketi">Şarj Başlatma — Adım 5 / 8</div>
     <h2>Makine Challenge Testleri</h2>
     <p class="aciklama">Her test cihazının makine tarafından doğru şekilde reddedildiğini onayla.</p>
     <div id="test-listesi"></div>
@@ -421,7 +433,7 @@
 
   <!-- 9) Adım 5: İlk Ürün Lid Kontrolü -->
   <section id="ekran-sb-lid" class="ekran">
-    <div class="adim-etiketi">Şarj Başlatma — Adım 5 / 7</div>
+    <div class="adim-etiketi">Şarj Başlatma — Adım 6 / 8</div>
     <h2>İlk Ürün Lid Kontrolü</h2>
     <p class="aciklama">İlk üretilen cihazın lid'ini referans görsellerle karşılaştır, sonra karekodu tara/yükle ya da bilgileri manuel gir.</p>
 
@@ -490,7 +502,7 @@
 
   <!-- 10) Adım 6: Numune Alma -->
   <section id="ekran-sb-numune" class="ekran">
-    <div class="adim-etiketi">Şarj Başlatma — Adım 6 / 7</div>
+    <div class="adim-etiketi">Şarj Başlatma — Adım 7 / 8</div>
     <h2>Numune Alma</h2>
     <p class="aciklama">Aşağıdaki numuneleri belirtilen spoollardan al.</p>
     <div id="numune-icerik"></div>
@@ -500,7 +512,7 @@
 
   <!-- 11) Adım 7: Özet / Onay -->
   <section id="ekran-sb-ozet" class="ekran">
-    <div class="adim-etiketi">Şarj Başlatma — Adım 7 / 7</div>
+    <div class="adim-etiketi">Şarj Başlatma — Adım 8 / 8</div>
     <h2>Özet ve Onay</h2>
     <div class="kart" id="ozet-kart"></div>
     <button id="btn-sarj-onayla">Şarjı Başlat</button>
@@ -554,9 +566,10 @@
   const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx-G3EEYRTudmpWako1i5nYYIAQbms6TQGEWy3qE74OAgrWLSt4v7qKUg1e8kbERFIH/exec';
 
   let mevcutKullanici = null; // { ad, rol }
-  let hatVerisi = [];         // hatlariGetir() önbelleği: [{saha, makine, aktif}, ...]
+  let hatVerisi = [];         // hatlariGetir() önbelleği: [{saha, makine, aktif, hatTuru}, ...]
   let seciliSaha = null;
   let seciliHat = null;       // "Üretim-2 / Sortimat" gibi metin
+  let seciliHatTuru = 'Sortimat'; // hatVerisi'nden gelen HatTuru — numune/test/ürün kataloğu bunun+kategorinin üzerinden seçilir
   let urunListesi = [];       // urunleriGetir() sonucu, ürün seçiminde kullanılır
   let acikSarj = null;        // acikSarjVarMi() sonucu — Saatlik Kontrol / Şarj Kapama ekranlarının çalıştığı açık şarj
   let saatlikOnLidVeri = null;
@@ -564,19 +577,23 @@
 
   // Şarj Başlatma Sihirbazı'nın o anki adımlardaki verisi
   let sihirbaz = {
+    kategori: null,      // Adım 0'da seçilen "EU" veya "EU_DISI"
     urun: null,          // seçilen ürün objesi
     partiNo: null,       // Adım 3'te girilen parti no
     uretimTarihi: null,  // Adım 5'te karekod/manuel'den gelen üretim tarihi (Date)
-    skt: null            // Adım 5'te hesaplanan SKT ("AA/YYYY")
+    skt: null,           // Adım 5'te hesaplanan SKT ("AA/YYYY")
+    testListesi: null,   // testChecklistiGetir() önbelleği (kategori+hatTuru'ye özel)
+    numunePlani: null    // numunePlaniGetir() önbelleği (kategori+hatTuru'ye özel)
   };
 
-  const CHALLENGE_TESTLERI = [
-    { id: 't1', metin: 'STN-3 Kamera Sistemi — SL-01 (güvenlik kilidi olmayan parça) reddedildi' },
-    { id: 't2', metin: 'STN-3 Kamera Sistemi — BD-01/02/03/04 (deforme blister test cihazları) reddedildi' },
-    { id: 't3', metin: 'STN-13 Tork Sensörü — stripsiz cihaz reddedildi' },
-    { id: 't4', metin: 'STN-13 Tork Sensörü — zor açılan kapaklı cihaz reddedildi' },
-    { id: 't5', metin: 'STN-31 Kamera Sistemi — karartılmış lid\'li cihaz reddedildi' }
-  ];
+  // Sheet'teki KosulKolonu değerini urun objesinin JS alanına eşler.
+  // Numune formülünün SAYILARI hep Sheet'te (NumunePlanlari) — burada sadece
+  // hangi E/H bayrağına bakılacağının eşlemesi var; yeni bir koşullu numune
+  // tipi çıkarsa (mevcut ReferansNumune/AbTest dışında) burada bir satır eklenir.
+  const KOSUL_ALAN_ESLEME = {
+    'ReferansNumune': 'referansNumune',
+    'AbTest': 'abTest'
+  };
 
   function ikonEvetHayir(deger) {
     return deger
@@ -584,9 +601,13 @@
       : '<span style="color:var(--gri);font-weight:800;">&#10005;</span>';
   }
 
+  function kategoriEtiketi(kategori) {
+    return kategori === 'EU_DISI' ? 'EU Dışı' : (kategori === 'EU' ? 'EU' : '-');
+  }
+
   const SIHIRBAZ_ADIMLARI = {
-    'ekran-sb-itd': 1, 'ekran-sb-spool': 2, 'ekran-sb-urun': 3,
-    'ekran-sb-testler': 4, 'ekran-sb-lid': 5, 'ekran-sb-numune': 6, 'ekran-sb-ozet': 7
+    'ekran-sb-kategori': 1, 'ekran-sb-itd': 2, 'ekran-sb-spool': 3, 'ekran-sb-urun': 4,
+    'ekran-sb-testler': 5, 'ekran-sb-lid': 6, 'ekran-sb-numune': 7, 'ekran-sb-ozet': 8
   };
 
   function ekranGoster(id) {
@@ -602,7 +623,7 @@
     const adim = SIHIRBAZ_ADIMLARI[id];
     if (adim) {
       ilerlemeYolu.style.display = 'block';
-      document.getElementById('sihirbaz-ilerleme-dolu').style.width = (adim / 7 * 100) + '%';
+      document.getElementById('sihirbaz-ilerleme-dolu').style.width = (adim / 8 * 100) + '%';
     } else {
       ilerlemeYolu.style.display = 'none';
     }
@@ -776,7 +797,7 @@
       <div class="yonetici-satir" data-sarj-id="${s.sarjId}">
         <div class="yonetici-satir-ust"><b>${s.hat}</b><span class="durum-rozet acik">AÇIK · ${sureMetni(s.baslangic)}</span></div>
         <div class="yonetici-satir-alt">
-          <span>${s.urunKodu}</span><span>·</span><span>Parti ${s.partiNo}</span><span>·</span><span>${s.baslatan || '-'}</span>
+          <span>${s.urunKodu}</span><span>·</span><span>Parti ${s.partiNo}</span><span>·</span><span>${kategoriEtiketi(s.kategori)}</span><span>·</span><span>${s.baslatan || '-'}</span>
         </div>
       </div>
     `).join('');
@@ -809,7 +830,7 @@
           <span class="durum-rozet ${s.durum === 'Acik' ? 'acik' : 'kapali'}">${s.durum === 'Acik' ? 'AÇIK' : 'KAPALI'}</span>
         </div>
         <div class="yonetici-satir-alt">
-          <span>${s.urunKodu}</span><span>·</span><span>Parti ${s.partiNo}</span><span>·</span><span>${s.baslatan || '-'}</span><span>·</span><span>${s.baslangic || '-'}</span>
+          <span>${s.urunKodu}</span><span>·</span><span>Parti ${s.partiNo}</span><span>·</span><span>${kategoriEtiketi(s.kategori)}</span><span>·</span><span>${s.baslatan || '-'}</span><span>·</span><span>${s.baslangic || '-'}</span>
         </div>
       </div>
     `).join('');
@@ -832,6 +853,7 @@
     if (!s) return;
     document.getElementById('yonetici-detay-kart').innerHTML = `
       <div class="satir"><span>Hat</span><b>${s.hat}</b></div>
+      <div class="satir"><span>Kategori</span><b>${kategoriEtiketi(s.kategori)}</b></div>
       <div class="satir"><span>Ürün</span><b>${s.urunKodu}</b></div>
       <div class="satir"><span>Parti No</span><b>${s.partiNo}</b></div>
       <div class="satir"><span>Üretim Tarihi</span><b>${s.uretimTarihi || '-'}</b></div>
@@ -910,7 +932,7 @@
       const buton = document.createElement('div');
       buton.className = 'secenek' + (h.aktif ? '' : ' pasif');
       buton.innerHTML = `<span>${h.makine}</span>` + (h.aktif ? '' : '<span class="etiket-yakinda">Yakında</span>');
-      if (h.aktif) buton.addEventListener('click', () => hatSeç(`${saha} / ${h.makine}`));
+      if (h.aktif) buton.addEventListener('click', () => hatSeç(`${saha} / ${h.makine}`, h.hatTuru));
       liste.appendChild(buton);
     });
   }
@@ -918,8 +940,9 @@
   document.getElementById('btn-geri-sahalara').addEventListener('click', sahalariYukleVeGoster);
 
   // ---- 4) Hat seçilince açık şarj kontrolü ----
-  async function hatSeç(hat) {
+  async function hatSeç(hat, hatTuru) {
     seciliHat = hat;
+    if (hatTuru) seciliHatTuru = hatTuru;
     ekranGoster('ekran-sarj-durumu');
     document.getElementById('sarj-durumu-baslik').textContent = hat;
     const icerik = document.getElementById('sarj-durumu-icerik');
@@ -935,6 +958,7 @@
         icerik.innerHTML = `
           <div class="rozet">AÇIK ŞARJ VAR</div>
           <div class="kart">
+            <div class="satir"><span>Kategori</span><b>${kategoriEtiketi(s.kategori)}</b></div>
             <div class="satir"><span>Parti No</span><b>${s.partiNo}</b></div>
             <div class="satir"><span>Ürün</span><b>${s.urunKodu}</b></div>
             <div class="satir"><span>Üretim Tarihi</span><b>${s.uretimTarihi || '-'}</b></div>
@@ -1115,12 +1139,25 @@
   // ================================================================
 
   function sihirbaziBaslat() {
-    sihirbaz = { urun: null, partiNo: null, uretimTarihi: null, skt: null, onLidUrl: null, arkaLidUrl: null, ilkUrunOnLid: null, ilkUrunArkaLid: null };
+    sihirbaz = {
+      kategori: null, urun: null, partiNo: null, uretimTarihi: null, skt: null,
+      onLidUrl: null, arkaLidUrl: null, ilkUrunOnLid: null, ilkUrunArkaLid: null,
+      testListesi: null, numunePlani: null
+    };
+    ekranGoster('ekran-sb-kategori');
+  }
+
+  document.getElementById('btn-geri-kategori').addEventListener('click', () => hatSeç(seciliHat));
+
+  function kategoriSec(kategori) {
+    sihirbaz.kategori = kategori;
     document.getElementById('itd-hata').textContent = '';
     ekranGoster('ekran-sb-itd');
   }
+  document.getElementById('kategori-eu').addEventListener('click', () => kategoriSec('EU'));
+  document.getElementById('kategori-eu-disi').addEventListener('click', () => kategoriSec('EU_DISI'));
 
-  document.getElementById('btn-geri-itd').addEventListener('click', () => hatSeç(seciliHat));
+  document.getElementById('btn-geri-itd').addEventListener('click', () => ekranGoster('ekran-sb-kategori'));
 
   // -- Adım 1: İTD Onayı --
   document.getElementById('itd-evet').addEventListener('click', () => {
@@ -1160,9 +1197,9 @@
     sihirbaz.urun = null;
 
     try {
-      const sonuc = await apiGet('urunleriGetir', {});
+      const sonuc = await apiGet('urunleriGetir', { kategori: sihirbaz.kategori });
       if (!sonuc.basarili || sonuc.veri.length === 0) {
-        sonuclar.innerHTML = '<div class="hata">Ürün bulunamadı.</div>';
+        sonuclar.innerHTML = `<div class="hata">${kategoriEtiketi(sihirbaz.kategori)} kataloğunda ürün bulunamadı.</div>`;
         return;
       }
       urunListesi = sonuc.veri;
@@ -1230,23 +1267,35 @@
     testleriGoster();
   });
 
-  // -- Adım 4: Challenge Testleri --
-  function testleriGoster() {
+  // -- Adım 4: Challenge Testleri (checklist Sheet'ten geliyor: ChallengeTestleri) --
+  async function testleriGoster() {
     const liste = document.getElementById('test-listesi');
-    liste.innerHTML = CHALLENGE_TESTLERI.map(t => `
-      <div class="onay-kutusu">
-        <input type="checkbox" id="${t.id}" />
-        <label for="${t.id}" style="margin:0;">${t.metin}</label>
-      </div>
-    `).join('');
-    document.getElementById('testler-hata').textContent = '';
+    liste.innerHTML = '<div class="yukleniyor">Test listesi yükleniyor…</div>';
     ekranGoster('ekran-sb-testler');
+    document.getElementById('testler-hata').textContent = '';
+    try {
+      const sonuc = await apiGet('testChecklistiGetir', { kategori: sihirbaz.kategori, hatTuru: seciliHatTuru });
+      sihirbaz.testListesi = (sonuc.basarili && sonuc.veri.length) ? sonuc.veri : [];
+      if (!sihirbaz.testListesi.length) {
+        liste.innerHTML = '<p class="aciklama">Bu kategori/hat için tanımlı bir test listesi bulunamadı — ChallengeTestleri sekmesini kontrol et.</p>';
+        return;
+      }
+      liste.innerHTML = sihirbaz.testListesi.map(t => `
+        <div class="onay-kutusu">
+          <input type="checkbox" id="${t.id}" />
+          <label for="${t.id}" style="margin:0;">${t.metin}</label>
+        </div>
+      `).join('');
+    } catch (err) {
+      liste.innerHTML = `<div class="hata">Bağlantı hatası: ${err.message}</div>`;
+    }
   }
 
   document.getElementById('btn-geri-testler').addEventListener('click', () => ekranGoster('ekran-sb-urun'));
 
   document.getElementById('btn-testler-devam').addEventListener('click', () => {
-    const hepsiOnayli = CHALLENGE_TESTLERI.every(t => document.getElementById(t.id).checked);
+    const testListesi = sihirbaz.testListesi || [];
+    const hepsiOnayli = testListesi.length > 0 && testListesi.every(t => document.getElementById(t.id).checked);
     if (!hepsiOnayli) {
       document.getElementById('testler-hata').textContent = 'Devam etmeden önce tüm testleri onaylamalısın.';
       return;
@@ -1755,20 +1804,41 @@
     return AVATAR_PALETI[toplam % AVATAR_PALETI.length];
   }
 
-  function numuneHesapla(urun) {
-    const numuneler = [
-      { ad: 'KKL Numunesi', renk: '#3B82F6', sabit: true, dagilim: { 1: 6, 5: 5, 8: 6, 12: 5 }, aktif: true },
-      { ad: 'RAF Numunesi', renk: '#10B981', sabit: true, dagilim: { 1: 12, 5: 12, 8: 12, 12: 12 }, aktif: true },
-      { ad: 'Referans Numunesi', renk: '#F97316', sabit: false, dagilim: { 1: 12, 5: 12, 8: 12, 12: 12 }, aktif: urun.referansNumune },
-      { ad: 'AB Test Numunesi', renk: '#8B5CF6', sabit: false, dagilim: { 1: 9, 5: 9, 8: 9, 12: 9 }, aktif: urun.abTest }
-    ];
-    return numuneler.filter(n => n.aktif);
+  // Numune formülü artık kod içinde değil — NumunePlanlari sekmesinden
+  // (kategori + hatTuru'ye göre) okunur. Miktar revize olduğunda burası
+  // hiç değişmeden yeni formülü uygular.
+  async function numunePlaniniYukle() {
+    if (sihirbaz.numunePlani) return sihirbaz.numunePlani; // aynı sihirbaz oturumunda önbellekten kullan
+    const sonuc = await apiGet('numunePlaniGetir', { kategori: sihirbaz.kategori, hatTuru: seciliHatTuru });
+    sihirbaz.numunePlani = (sonuc.basarili && sonuc.veri) ? sonuc.veri : [];
+    return sihirbaz.numunePlani;
   }
 
-  function numuneGoster() {
+  function numuneAktifMi(n, urun) {
+    if (n.sabit) return true;
+    if (!n.kosulKolonu) return false;
+    const alan = KOSUL_ALAN_ESLEME[n.kosulKolonu];
+    return alan ? !!urun[alan] : false;
+  }
+
+  async function numuneGoster() {
     const icerik = document.getElementById('numune-icerik');
+    icerik.innerHTML = '<div class="yukleniyor">Numune planı yükleniyor…</div>';
+    ekranGoster('ekran-sb-numune');
     const u = sihirbaz.urun;
-    const numuneler = numuneHesapla(u);
+
+    let tumPlan;
+    try {
+      tumPlan = await numunePlaniniYukle();
+    } catch (err) {
+      icerik.innerHTML = `<div class="hata">Bağlantı hatası: ${err.message}</div>`;
+      return;
+    }
+    const numuneler = tumPlan.filter(n => numuneAktifMi(n, u));
+    if (!numuneler.length) {
+      icerik.innerHTML = `<p class="aciklama">${kategoriEtiketi(sihirbaz.kategori)} / ${seciliHatTuru} için NumunePlanlari sekmesinde tanımlı numune bulunamadı — sekmeyi kontrol et.</p>`;
+      return;
+    }
     const ekNumuneler = numuneler.filter(n => !n.sabit);
     const harfler = u.sapUrunAdi.replace(/[^A-Za-zÇĞİÖŞÜçğıöşü]/g, '').slice(0, 2).toUpperCase() || '??';
 
@@ -1824,11 +1894,12 @@
     });
 
     const genelToplam = numuneler.reduce((t, n) => t + Object.values(n.dagilim).reduce((a, b) => a + b, 0), 0);
+    const sabitAdlar = numuneler.filter(n => n.sabit).map(n => n.ad.replace(' Numunesi', '')).join('+') || '-';
     const sabitToplam = numuneler.filter(n => n.sabit).reduce((t, n) => t + Object.values(n.dagilim).reduce((a, b) => a + b, 0), 0);
     html += `
       <div class="toplam-numune-kart">
         <div class="sol"><span>Toplam Alınacak Numune</span><b>${genelToplam} adet</b></div>
-        <div class="sag">KKL+RAF<br>${sabitToplam} sabit</div>
+        <div class="sag">${sabitAdlar}<br>${sabitToplam} sabit</div>
       </div>
     `;
 
@@ -1857,6 +1928,7 @@
       ${lidGorselleriHtml()}
       ${cekilenIlkUrunLidGorselleriHtml()}
       <div class="satir"><span>Hat</span><b>${seciliHat}</b></div>
+      <div class="satir"><span>Kategori</span><b>${kategoriEtiketi(sihirbaz.kategori)}</b></div>
       <div class="satir"><span>Ürün</span><b>${u.sapUrunAdi}</b></div>
       <div class="satir"><span>Ruhsat Sahibi</span><b>${u.ruhsatSahibi}</b></div>
       <div class="satir"><span>Ülke</span><b>${u.ulke}</b></div>
@@ -1886,7 +1958,8 @@
         skt: sihirbaz.skt,
         baslatan: mevcutKullanici ? mevcutKullanici.ad : '',
         ilkUrunOnLidBase64: sihirbaz.ilkUrunOnLid,
-        ilkUrunArkaLidBase64: sihirbaz.ilkUrunArkaLid
+        ilkUrunArkaLidBase64: sihirbaz.ilkUrunArkaLid,
+        kategori: sihirbaz.kategori
       });
       if (sonuc.basarili) {
         await hatSeç(seciliHat); // açık şarj kartını göstererek doğrula
